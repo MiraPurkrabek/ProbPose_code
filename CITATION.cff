@@ -1,0 +1,8 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+  - name: "Purkrabek, Miroslav and Matas, Jiri"
+title: "ProbPose: A Probabilistic Approach to 2D Human Pose Estimation"
+date-released: 2025-04-09
+url: "https://arxiv.org/abs/2412.02254"
+license: GPL-3.0
