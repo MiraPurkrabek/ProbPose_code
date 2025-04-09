@@ -117,7 +117,7 @@ If you find this work useful, please consider citing our paper:
 
 ```bibtex
 @inproceedings{probpose2025,
-  title={ProbPose: A Probabilistic Approach to 2D Human Pose Estimation}, 
+  title={{ProbPose: A Probabilistic Approach to 2D Human Pose Estimation}}, 
   author={Miroslav Purkrabek and Jiri Matas},
   year={2025},
   booktitle={Computer Vision and Pattern Recognition (CVPR)},
