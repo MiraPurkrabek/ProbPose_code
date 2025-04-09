@@ -91,6 +91,12 @@ For more detailed information on demos and visualization options, please refer t
 Pre-trained models are available on [VRG Hugging Face 🤗](https://huggingface.co/vrg-prague/ProbPose-s/):
 - [ProbPose-s weights](https://huggingface.co/vrg-prague/ProbPose-s/resolve/main/ProbPose-s.pth)
 
+## ✂️ CropCOCO Dataset
+
+The [CropCOCO dataset](https://huggingface.co/datasets/vrg-prague/CropCOCO) is available on VRG Hugging Face 🤗.
+
+For Ex-OKS and Ex-mAP evaluation, you can use [cocoeval.py](mmpose/evaluation/metrics/_cocoeval.py) file which is a direct replacement for the original cocoeval.py file from xtcocotools.
+We plan to release Ex-mAP evaluation tool as a standalone package similar to xtcocotools.
 
 
 ## 🗺️ Roadmap
