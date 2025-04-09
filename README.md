@@ -88,11 +88,14 @@ For more detailed information on demos and visualization options, please refer t
 
 ## 📦 Pre-trained Models
 
-Pre-trained models will be available at:
-- [ProbPose-s](the-link-is-not-ready-yet) (TBD)
+Pre-trained models are available on [VRG Hugging Face 🤗](https://huggingface.co/vrg-prague/ProbPose-s/):
+- [ProbPose-s weights](https://huggingface.co/vrg-prague/ProbPose-s/resolve/main/ProbPose-s.pth)
+
+
 
 ## 🗺️ Roadmap
 
+- [ ] Add config and weights for DoubleProbmap model
 - [ ] Add out-of-image pose visualization
 - [ ] Add new package with Ex-OKS implementation
 - [ ] Add ProbPose to MMPose library
