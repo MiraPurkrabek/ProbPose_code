@@ -38,6 +38,14 @@ Basic installation steps:
 git clone https://github.com/mirapurkrabek/ProbPose_code.git ProbPose/
 cd ProbPose
 
+# Install your version of torch, torchvision, OpenCV and NumPy
+pip install torch==2.1.2+cu121 torchvision==0.16.2+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+pip install numpy==1.25.1 opencv-python==4.9.0.80
+
+# Install MMLibrary
+pip install -U openmim
+mim install mmengine "mmcv==2.1.0" "mmdet==3.3.0" "mmpretrain==1.2.0"
+
 # Install dependencies
 pip install -r requirements.txt
 pip install -e .
