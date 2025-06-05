@@ -124,10 +124,12 @@ This project is built on top of [MMPose](https://github.com/open-mmlab/mmpose). 
 If you find this work useful, please consider citing our paper:
 
 ```bibtex
-@inproceedings{probpose2025,
-  title={{ProbPose: A Probabilistic Approach to 2D Human Pose Estimation}}, 
-  author={Miroslav Purkrabek and Jiri Matas},
-  year={2025},
-  booktitle={Computer Vision and Pattern Recognition (CVPR)},
+@InProceedings{Purkrabek2025CVPR,
+    author    = {Purkrabek, Miroslav and Matas, Jiri},
+    title     = {ProbPose: A Probabilistic Approach to 2D Human Pose Estimation},
+    booktitle = {Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR)},
+    month     = {June},
+    year      = {2025},
+    pages     = {27124-27133}
 }
 ```
