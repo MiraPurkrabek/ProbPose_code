@@ -1,10 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmengine.config import read_base
-
-with read_base():
-    from mmpose.configs._base_.default_runtime import *  # noqa
-
 from mmcv.transforms import RandomChoice, RandomChoiceResize
+from mmengine.config import read_base
 from mmengine.dataset import DefaultSampler
 from mmengine.model import PretrainedInit
 from mmengine.optim import LinearLR, MultiStepLR
@@ -19,6 +15,11 @@ from mmpose.evaluation import CocoMetric
 from mmpose.models import (BottomupPoseEstimator, ChannelMapper, EDPoseHead,
                            PoseDataPreprocessor, ResNet)
 from mmpose.models.utils import FrozenBatchNorm2d
+
+with read_base():
+    from mmpose.configs._base_.default_runtime import *  # noqa
+
+
 
 # runtime
 train_cfg.update(max_epochs=50, val_interval=10)  # noqa

@@ -7,11 +7,10 @@ import numpy as np
 import torch
 from mmengine.structures import InstanceData, PixelData
 from mmengine.utils import is_list_of
+from pycocotools import mask as Mask
 
 from .bbox.transforms import get_warp_matrix
 from .pose_data_sample import PoseDataSample
-
-from pycocotools import mask as Mask
 
 
 def merge_data_samples(data_samples: List[PoseDataSample]) -> PoseDataSample:

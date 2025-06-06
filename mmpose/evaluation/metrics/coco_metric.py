@@ -2,26 +2,25 @@
 import datetime
 import os.path as osp
 import tempfile
+import traceback
 from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Sequence
-import traceback
 
 import numpy as np
 from mmengine.evaluator import BaseMetric
 from mmengine.fileio import dump, get_local_path, load
 from mmengine.logging import MessageHub, MMLogger, print_log
 from xtcocotools.coco import COCO
-# from xtcocotools.cocoeval import COCOeval
-from ._cocoeval import COCOeval
 
 from mmpose.registry import METRICS
 from mmpose.structures.bbox import bbox_xyxy2xywh
-from mmpose.structures.keypoint import find_min_padding_exact, fix_bbox_aspect_ratio
+from mmpose.structures.keypoint import (find_min_padding_exact,
+                                        fix_bbox_aspect_ratio)
 from ..functional import (oks_nms, soft_oks_nms, transform_ann, transform_pred,
                           transform_sigmas)
-
 from . import _mask as maskUtils
-
+# from xtcocotools.cocoeval import COCOeval
+from ._cocoeval import COCOeval
 
 EVAL_HEATMAPS = False
 EVAL_CALIBRATION = False

@@ -5,7 +5,6 @@ import numpy as np
 from mmcv.transforms import LoadImageFromFile
 
 from mmpose.registry import TRANSFORMS
-
 from mmpose.structures.keypoint import fix_bbox_aspect_ratio
 
 

@@ -1,28 +1,24 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
+import shutil
 from typing import Optional, Sequence, Tuple, Union
 
+import cv2
+import numpy as np
 import torch
 from mmcv.cnn import build_conv_layer, build_upsample_layer
 from mmengine.structures import PixelData
+from sparsemax import Sparsemax
 from torch import Tensor, nn
 
 from mmpose.evaluation.functional import pose_pck_accuracy
 from mmpose.models.utils.tta import flip_heatmaps
 from mmpose.registry import KEYPOINT_CODECS, MODELS
+from mmpose.structures.keypoint import fix_bbox_aspect_ratio
 from mmpose.utils.tensor_utils import to_numpy
 from mmpose.utils.typing import (ConfigType, Features, OptConfigType,
                                  OptSampleList, Predictions)
 from ..base_head import BaseHead
-
-import numpy as np
-
-from sparsemax import Sparsemax
-
-import os
-import shutil
-import cv2
-
-from mmpose.structures.keypoint import fix_bbox_aspect_ratio
 
 OptIntSeq = Optional[Sequence[int]]
 

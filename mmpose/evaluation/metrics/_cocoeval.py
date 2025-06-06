@@ -1,13 +1,15 @@
-import numpy as np
-import datetime
-import time
-from collections import defaultdict
-from . import _mask as maskUtils
 import copy
+import datetime
 import sys
+import time
 import warnings
+from collections import defaultdict
+
+import numpy as np
 
 from mmpose.structures.keypoint import fix_bbox_aspect_ratio
+from . import _mask as maskUtils
+
 
 class NullWriter(object):
 
@@ -1212,6 +1214,3 @@ class Params:
         self.iouType = iouType
         # useSegm is deprecated
         self.useSegm = None
-
-
-        

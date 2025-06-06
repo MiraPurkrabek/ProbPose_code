@@ -3,11 +3,10 @@ import os
 import warnings
 from typing import Optional, Sequence
 
-import numpy as np
-
 import mmcv
 import mmengine
 import mmengine.fileio as fileio
+import numpy as np
 from mmengine.hooks import Hook
 from mmengine.runner import Runner
 from mmengine.visualization import Visualizer

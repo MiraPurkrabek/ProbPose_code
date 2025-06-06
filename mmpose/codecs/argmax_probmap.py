@@ -1,14 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
 from typing import Optional, Tuple
 
 import cv2
 import numpy as np
-import os
 
 from mmpose.registry import KEYPOINT_CODECS
 from .base import BaseKeypointCodec
-from .utils import (generate_offset_heatmap, generate_udp_gaussian_heatmaps,
-                    get_heatmap_maximum, refine_keypoints_dark_udp, generate_probmaps, get_heatmap_expected_value, gaussian_blur)
+from .utils import (gaussian_blur, generate_offset_heatmap, generate_probmaps,
+                    generate_udp_gaussian_heatmaps, get_heatmap_expected_value,
+                    get_heatmap_maximum, refine_keypoints_dark_udp)
 
 
 @KEYPOINT_CODECS.register_module()

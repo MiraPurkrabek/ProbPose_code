@@ -1,13 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmengine.config import read_base
-
-with read_base():
-    from mmpose.configs._base_.default_runtime import *
-
 from albumentations.augmentations import Blur, CoarseDropout, MedianBlur
 from mmdet.datasets.transforms import YOLOXHSVRandomAug
 from mmdet.engine.hooks import PipelineSwitchHook
 from mmdet.models import CSPNeXt
+from mmengine.config import read_base
 from mmengine.dataset import DefaultSampler
 from mmengine.hooks import EMAHook
 from mmengine.model import PretrainedInit
@@ -25,6 +21,11 @@ from mmpose.engine.hooks import ExpMomentumEMA
 from mmpose.evaluation import CocoMetric
 from mmpose.models import (KLDiscretLoss, PoseDataPreprocessor, RTMCCHead,
                            TopdownPoseEstimator)
+
+with read_base():
+    from mmpose.configs._base_.default_runtime import *
+
+
 
 # runtime
 max_epochs = 420

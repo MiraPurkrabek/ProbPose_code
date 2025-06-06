@@ -1,11 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmengine.config import read_base
-
-with read_base():
-    from mmpose.configs._base_.default_runtime import *  # noqa
-
 from albumentations.augmentations import Blur, CoarseDropout, MedianBlur
 from mmdet.engine.hooks import PipelineSwitchHook
+from mmengine.config import read_base
 from mmengine.dataset import DefaultSampler
 from mmengine.hooks import EMAHook
 from mmengine.model import PretrainedInit
@@ -30,6 +26,11 @@ from mmpose.evaluation import CocoWholeBodyMetric
 from mmpose.models import (CSPNeXt, CSPNeXtPAFPN, KLDiscretLoss,
                            PoseDataPreprocessor, RTMWHead,
                            TopdownPoseEstimator)
+
+with read_base():
+    from mmpose.configs._base_.default_runtime import *  # noqa
+
+
 
 # common setting
 num_keypoints = 133

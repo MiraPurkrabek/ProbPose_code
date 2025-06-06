@@ -215,4 +215,3 @@ val_evaluator = dict(
     datasets=combined_val_dataset['datasets'],
     )
 test_evaluator = val_evaluator
-

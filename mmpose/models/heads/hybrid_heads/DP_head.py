@@ -1,21 +1,22 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import json
 from typing import Optional, Sequence, Tuple, Union
 
+import numpy as np
 import torch
 from mmcv.cnn import build_conv_layer, build_upsample_layer
 from mmengine.structures import PixelData
 from torch import Tensor, nn
 
-from mmpose.evaluation.functional import pose_pck_accuracy, keypoint_pck_accuracy
+from mmpose.evaluation.functional import (keypoint_pck_accuracy,
+                                          pose_pck_accuracy)
 from mmpose.models.utils.tta import flip_heatmaps
 from mmpose.registry import KEYPOINT_CODECS, MODELS
 from mmpose.utils.tensor_utils import to_numpy
-from mmpose.utils.typing import (ConfigType, Features, OptConfigType,
-                                 OptSampleList, Predictions, InstanceList, InstanceData)
+from mmpose.utils.typing import (ConfigType, Features, InstanceData,
+                                 InstanceList, OptConfigType, OptSampleList,
+                                 Predictions)
 from ..base_head import BaseHead
-
-import numpy as np
-import json
 
 OptIntSeq = Optional[Sequence[int]]
 

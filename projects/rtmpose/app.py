@@ -3,6 +3,11 @@
 import os
 from functools import partial
 
+import gradio as gr  # noqa
+from openxlab.model import download  # noqa
+
+from mmpose.apis import MMPoseInferencer  # noqa
+
 # prepare environment
 project_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 mmpose_path = project_path.split('/projects', 1)[0]
@@ -16,10 +21,7 @@ os.system('python -m mim install "mmengine>=0.9.0"')
 os.system('python -m mim install "mmdet>=3.0.0"')
 os.system(f'python -m mim install -e {mmpose_path}')
 
-import gradio as gr  # noqa
-from openxlab.model import download  # noqa
 
-from mmpose.apis import MMPoseInferencer  # noqa
 
 # download checkpoints
 download(model_repo='mmpose/RTMPose', model_name='dwpose-l')

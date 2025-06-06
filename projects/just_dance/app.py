@@ -4,6 +4,10 @@ import sys
 from functools import partial
 from typing import Optional
 
+import gradio as gr  # noqa
+from mmengine.utils import mkdir_or_exist  # noqa
+from process_video import VideoProcessor  # noqa
+
 project_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 mmpose_path = project_path.split('/projects', 1)[0]
 
@@ -18,9 +22,6 @@ os.environ[
     'PYTHONPATH'] = f"{os.environ.get('PYTHONPATH', '.')}:{project_path}"
 sys.path.append(project_path)
 
-import gradio as gr  # noqa
-from mmengine.utils import mkdir_or_exist  # noqa
-from process_video import VideoProcessor  # noqa
 
 
 def process_video(

@@ -13,9 +13,10 @@ from mmengine.structures import InstanceData, PixelData
 from mmpose.datasets.datasets.utils import parse_pose_metainfo
 from mmpose.registry import VISUALIZERS
 from mmpose.structures import PoseDataSample
+from mmpose.structures.keypoint import fix_bbox_aspect_ratio
 from .opencv_backend_visualizer import OpencvBackendVisualizer
 from .simcc_vis import SimCCVisualizer
-from mmpose.structures.keypoint import fix_bbox_aspect_ratio
+
 
 def _get_adaptive_scales(areas: np.ndarray,
                          min_area: int = 800,

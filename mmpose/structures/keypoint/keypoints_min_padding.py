@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def find_min_padding_exact(bbox, kpts, aspect_ratio=3/4, bbox_format='xywh'):
     '''Find the minimum padding to make keypoint inside bbox'''
     assert bbox_format.lower() in ['xywh', 'xyxy'], f"Invalid bbox format {bbox_format}. Only 'xyxy' or 'xywh' are supported."

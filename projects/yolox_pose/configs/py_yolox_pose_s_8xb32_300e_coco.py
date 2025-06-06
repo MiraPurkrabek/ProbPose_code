@@ -1,8 +1,3 @@
-from mmengine.config import read_base
-
-with read_base():
-    from ._base_.py_default_runtime import *
-
 from datasets import (CocoDataset, FilterDetPoseAnnotations, PackDetPoseInputs,
                       PoseToDetConverter)
 from mmcv.ops import nms
@@ -12,6 +7,7 @@ from mmdet.engine.hooks import SyncNormHook
 from mmdet.engine.schedulers import QuadraticWarmupLR
 from mmdet.models import CrossEntropyLoss, DetDataPreprocessor, IoULoss, L1Loss
 from mmdet.models.task_modules import BboxOverlaps2D
+from mmengine.config import read_base
 from mmengine.dataset import DefaultSampler
 from mmengine.hooks import EMAHook
 from mmengine.model import PretrainedInit
@@ -28,6 +24,11 @@ from torch.optim import AdamW
 
 from mmpose.datasets.transforms import LoadImage
 from mmpose.evaluation import CocoMetric
+
+with read_base():
+    from ._base_.py_default_runtime import *
+
+
 
 # model settings
 model = dict(

@@ -5,8 +5,8 @@ from .bottomup_transforms import (BottomupGetHeatmapMask, BottomupRandomAffine,
 from .common_transforms import (Albumentation, FilterAnnotations,
                                 GenerateTarget, GetBBoxCenterScale,
                                 PhotometricDistortion, RandomBBoxTransform,
-                                RandomFlip, RandomHalfBody, YOLOXHSVRandomAug,
-                                RandomPatchesBlackout)
+                                RandomFlip, RandomHalfBody,
+                                RandomPatchesBlackout, YOLOXHSVRandomAug)
 from .converting import KeypointConverter, SingleHandConverter
 from .formatting import PackPoseInputs
 from .hand_transforms import HandRandomFlip

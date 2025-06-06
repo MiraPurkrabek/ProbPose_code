@@ -1,9 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmengine.config import read_base
-
-with read_base():
-    from mmpose.configs._base_.default_runtime import *
-
 from mmengine.dataset import DefaultSampler
 from mmengine.model import PretrainedInit
 from mmengine.optim import LinearLR, MultiStepLR
@@ -17,6 +13,11 @@ from mmpose.datasets.transforms.common_transforms import RandomBBoxTransform
 from mmpose.evaluation import CocoMetric
 from mmpose.models import (HeatmapHead, HRNet, KeypointMSELoss,
                            PoseDataPreprocessor, TopdownPoseEstimator)
+
+with read_base():
+    from mmpose.configs._base_.default_runtime import *
+
+
 
 # runtime
 train_cfg.update(max_epochs=210, val_interval=10)

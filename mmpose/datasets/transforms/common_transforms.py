@@ -16,7 +16,7 @@ from scipy.stats import truncnorm
 
 from mmpose.codecs import *  # noqa: F401, F403
 from mmpose.registry import KEYPOINT_CODECS, TRANSFORMS
-from mmpose.structures.bbox import bbox_xyxy2cs, flip_bbox, bbox_cs2xyxy
+from mmpose.structures.bbox import bbox_cs2xyxy, bbox_xyxy2cs, flip_bbox
 from mmpose.structures.keypoint import flip_keypoints
 from mmpose.utils.typing import MultiConfig
 

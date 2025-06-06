@@ -6,9 +6,8 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch import Tensor
-
 from scipy.ndimage import convolve
+from torch import Tensor
 
 
 def _prepare_oks_kernels(K, H, W):
@@ -438,4 +437,3 @@ def _get_subpixel_maximums(heatmaps, locs):
         subpixel_locs[valid_mask, 1] += subpixel_y_shift
 
     return subpixel_locs
-

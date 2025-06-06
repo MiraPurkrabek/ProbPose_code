@@ -7,7 +7,8 @@ from mmcv.transforms import BaseTransform
 from mmengine import is_seq_of
 
 from mmpose.registry import TRANSFORMS
-from mmpose.structures.bbox import get_udp_warp_matrix, get_warp_matrix, bbox_cs2xyxy, bbox_xyxy2cs
+from mmpose.structures.bbox import (bbox_cs2xyxy, bbox_xyxy2cs,
+                                    get_udp_warp_matrix, get_warp_matrix)
 
 
 @TRANSFORMS.register_module()
