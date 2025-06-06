@@ -183,13 +183,13 @@ class DoubleProbMap(BaseKeypointCodec):
                 keypoints=self._kpts_to_activation_pts(keypoints, htm_type="in"),
                 keypoints_visible=keypoints_visible,
                 sigma=self.sigma,
-                keypoints_visibility=keypoints_visibility,)
+            )
             out_heatmaps, out_kpt_weights = generate_probmaps(
                 heatmap_size=self.heatmap_size,
                 keypoints=self._kpts_to_activation_pts(keypoints, htm_type="out"),
                 keypoints_visible=keypoints_visible,
                 sigma=self.sigma,
-                keypoints_visibility=keypoints_visibility,)
+            )
         
         elif self.heatmap_type == 'combined':
             heatmaps, keypoint_weights = generate_offset_heatmap(

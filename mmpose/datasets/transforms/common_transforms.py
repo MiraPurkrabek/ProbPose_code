@@ -351,6 +351,42 @@ class RandomHalfBody(BaseTransform):
         scale = np.array([w, h], dtype=center.dtype) * self.padding
 
         return center, scale
+    
+    def _get_half_body_exact_bbox(self, keypoints: np.ndarray,
+                                half_body_ids: List[int],
+                                bbox: np.ndarray,
+                                ) -> np.ndarray:
+        """Get half-body bbox center and scale of a single instance.
+
+        Args:
+            keypoints (np.ndarray): Keypoints in shape (K, D)
+            upper_body_ids (list): The list of half-body keypont indices
+
+        Returns:
+            tuple: A tuple containing half-body bbox center and scale
+            - center: Center (x, y) of the bbox
+            - scale: Scale (w, h) of the bbox
+        """
+
+        selected_keypoints = keypoints[half_body_ids]
+        center = selected_keypoints.mean(axis=0)[:2]
+
+        x1, y1 = selected_keypoints.min(axis=0)
+        x2, y2 = selected_keypoints.max(axis=0)
+        w = x2 - x1
+        h = y2 - y1
+        scale = np.array([w, h], dtype=center.dtype) * self.padding
+
+        x1, y1 = center - scale / 2
+        x2, y2 = center + scale / 2
+
+        # Do not exceed the original bbox
+        x1 = np.maximum(x1, bbox[0])
+        y1 = np.maximum(y1, bbox[1])
+        x2 = np.minimum(x2, bbox[2])
+        y2 = np.minimum(y2, bbox[3])
+
+        return np.array([x1, y1, x2, y2])
 
     @cache_randomness
     def _random_select_half_body(self, keypoints_visible: np.ndarray,

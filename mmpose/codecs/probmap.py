@@ -127,9 +127,7 @@ class ProbMap(BaseKeypointCodec):
             heatmap_size=self.heatmap_size,
             keypoints=keypoints / self.scale_factor,
             keypoints_visible=keypoints_visible,
-            keypoints_visibility=keypoints_visibility,
-            sigma=self.sigma,
-            increase_sigma_with_padding=self.increase_sigma_with_padding)
+            sigma=self.sigma,)
 
         annotated = keypoints_visible > 0
         
