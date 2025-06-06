@@ -14,18 +14,16 @@ class TestLiteHrnet(TestCase):
     @staticmethod
     def is_norm(modules):
         """Check if is one of the norms."""
-        if isinstance(modules, (_BatchNorm, )):
+        if isinstance(modules, (_BatchNorm,)):
             return True
         return False
 
     @staticmethod
     def all_zeros(modules):
         """Check if the weight(and bias) is all zero."""
-        weight_zero = torch.equal(modules.weight.data,
-                                  torch.zeros_like(modules.weight.data))
-        if hasattr(modules, 'bias'):
-            bias_zero = torch.equal(modules.bias.data,
-                                    torch.zeros_like(modules.bias.data))
+        weight_zero = torch.equal(modules.weight.data, torch.zeros_like(modules.weight.data))
+        if hasattr(modules, "bias"):
+            bias_zero = torch.equal(modules.bias.data, torch.zeros_like(modules.bias.data))
         else:
             bias_zero = True
 
@@ -40,7 +38,8 @@ class TestLiteHrnet(TestCase):
                 40,
             ],
             reduce_ratio=8,
-            module_type='LITE')
+            module_type="LITE",
+        )
 
         x = torch.randn(2, 40, 56, 56)
         x_out = block([[x]])
@@ -53,7 +52,8 @@ class TestLiteHrnet(TestCase):
                 40,
             ],
             reduce_ratio=8,
-            module_type='NAIVE')
+            module_type="NAIVE",
+        )
 
         x = torch.randn(2, 40, 56, 56)
         x_out = block([x])
@@ -67,7 +67,8 @@ class TestLiteHrnet(TestCase):
                     40,
                 ],
                 reduce_ratio=8,
-                module_type='none')
+                module_type="none",
+            )
 
     def test_litehrnet_backbone(self):
         extra = dict(
@@ -77,15 +78,17 @@ class TestLiteHrnet(TestCase):
                 num_modules=(2, 4, 2),
                 num_branches=(2, 3, 4),
                 num_blocks=(2, 2, 2),
-                module_type=('LITE', 'LITE', 'LITE'),
+                module_type=("LITE", "LITE", "LITE"),
                 with_fuse=(True, True, True),
                 reduce_ratios=(8, 8, 8),
                 num_channels=(
                     (40, 80),
                     (40, 80, 160),
                     (40, 80, 160, 320),
-                )),
-            with_head=True)
+                ),
+            ),
+            with_head=True,
+        )
 
         model = LiteHRNet(extra, in_channels=3)
 
@@ -114,15 +117,17 @@ class TestLiteHrnet(TestCase):
                 num_modules=(2, 4, 2),
                 num_branches=(2, 3, 4),
                 num_blocks=(2, 2, 2),
-                module_type=('NAIVE', 'NAIVE', 'NAIVE'),
+                module_type=("NAIVE", "NAIVE", "NAIVE"),
                 with_fuse=(True, True, True),
                 reduce_ratios=(8, 8, 8),
                 num_channels=(
                     (40, 80),
                     (40, 80, 160),
                     (40, 80, 160, 320),
-                )),
-            with_head=True)
+                ),
+            ),
+            with_head=True,
+        )
 
         model = LiteHRNet(extra, in_channels=3)
 

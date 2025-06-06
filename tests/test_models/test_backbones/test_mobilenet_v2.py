@@ -14,7 +14,7 @@ class TestMobilenetV2(TestCase):
     @staticmethod
     def is_block(modules):
         """Check if is ResNet building block."""
-        if isinstance(modules, (InvertedResidual, )):
+        if isinstance(modules, (InvertedResidual,)):
             return True
         return False
 
@@ -64,16 +64,14 @@ class TestMobilenetV2(TestCase):
         self.assertEqual(x_out.shape, torch.Size((1, 24, 28, 28)))
 
         # Test InvertedResidual with checkpoint forward
-        block = InvertedResidual(
-            16, 24, stride=1, expand_ratio=6, with_cp=True)
+        block = InvertedResidual(16, 24, stride=1, expand_ratio=6, with_cp=True)
         self.assertTrue(block.with_cp)
         x = torch.randn(1, 16, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, torch.Size((1, 24, 56, 56)))
 
         # Test InvertedResidual with act_cfg=dict(type='ReLU')
-        block = InvertedResidual(
-            16, 24, stride=1, expand_ratio=6, act_cfg=dict(type='ReLU'))
+        block = InvertedResidual(16, 24, stride=1, expand_ratio=6, act_cfg=dict(type="ReLU"))
         x = torch.randn(1, 16, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, torch.Size((1, 24, 56, 56)))
@@ -102,7 +100,7 @@ class TestMobilenetV2(TestCase):
             for param in mod.parameters():
                 self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -172,10 +170,7 @@ class TestMobilenetV2(TestCase):
         self.assertEqual(feat[-1].shape, torch.Size((1, 1280, 7, 7)))
 
         # Test MobileNetV2 forward with dict(type='ReLU')
-        model = MobileNetV2(
-            widen_factor=1.0,
-            act_cfg=dict(type='ReLU'),
-            out_indices=range(0, 7))
+        model = MobileNetV2(widen_factor=1.0, act_cfg=dict(type="ReLU"), out_indices=range(0, 7))
         model.init_weights()
         model.train()
 
@@ -211,9 +206,8 @@ class TestMobilenetV2(TestCase):
 
         # Test MobileNetV2 with BatchNorm forward
         model = MobileNetV2(
-            widen_factor=1.0,
-            norm_cfg=dict(type='GN', num_groups=2, requires_grad=True),
-            out_indices=range(0, 7))
+            widen_factor=1.0, norm_cfg=dict(type="GN", num_groups=2, requires_grad=True), out_indices=range(0, 7)
+        )
         for m in model.modules():
             if self.is_norm(m):
                 self.assertIsInstance(m, GroupNorm)
@@ -244,8 +238,7 @@ class TestMobilenetV2(TestCase):
         self.assertEqual(feat[2].shape, torch.Size((1, 96, 14, 14)))
 
         # Test MobileNetV2 with checkpoint forward
-        model = MobileNetV2(
-            widen_factor=1.0, with_cp=True, out_indices=range(0, 7))
+        model = MobileNetV2(widen_factor=1.0, with_cp=True, out_indices=range(0, 7))
         for m in model.modules():
             if self.is_block(m):
                 self.assertTrue(m.with_cp)

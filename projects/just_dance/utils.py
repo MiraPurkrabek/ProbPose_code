@@ -6,8 +6,7 @@ import cv2
 import numpy as np
 
 
-def resize_image_to_fixed_height(image: np.ndarray,
-                                 fixed_height: int) -> np.ndarray:
+def resize_image_to_fixed_height(image: np.ndarray, fixed_height: int) -> np.ndarray:
     """Resizes an input image to a specified fixed height while maintaining its
     aspect ratio.
 
@@ -27,9 +26,7 @@ def resize_image_to_fixed_height(image: np.ndarray,
     return resized_image
 
 
-def blend_images(img1: np.ndarray,
-                 img2: np.ndarray,
-                 blend_ratios: Tuple[float, float] = (1, 1)) -> np.ndarray:
+def blend_images(img1: np.ndarray, img2: np.ndarray, blend_ratios: Tuple[float, float] = (1, 1)) -> np.ndarray:
     """Blends two input images with specified blend ratios.
 
     Args:
@@ -60,14 +57,12 @@ def blend_images(img1: np.ndarray,
 def convert_video_fps(video):
 
     input_video = video
-    video_name, post_fix = input_video.rsplit('.', 1)
-    output_video = f'{video_name}_30fps.{post_fix}'
+    video_name, post_fix = input_video.rsplit(".", 1)
+    output_video = f"{video_name}_30fps.{post_fix}"
     if os.path.exists(output_video):
         return output_video
 
-    os.system(
-        f"ffmpeg -i {input_video} -vf \"minterpolate='fps=30'\" {output_video}"
-    )
+    os.system(f"ffmpeg -i {input_video} -vf \"minterpolate='fps=30'\" {output_video}")
 
     return output_video
 
@@ -92,14 +87,13 @@ def get_smoothed_kpt(kpts, index, sigma=5):
 
     # Calculate the Gaussian ratio for each keypoint
     gaussian_ratio = np.arange(len(scores)) + start_idx - index
-    gaussian_ratio = np.exp(-gaussian_ratio**2 / 2)
+    gaussian_ratio = np.exp(-(gaussian_ratio**2) / 2)
 
     # Update scores using the Gaussian ratio
     scores *= gaussian_ratio[:, None]
 
     # Compute the smoothed coordinates
-    smoothed_coords = (coords * scores[..., None]).sum(axis=0) / (
-        scores[..., None].sum(axis=0) + 1e-4)
+    smoothed_coords = (coords * scores[..., None]).sum(axis=0) / (scores[..., None].sum(axis=0) + 1e-4)
 
     original_kpt[..., :2] = smoothed_coords
 

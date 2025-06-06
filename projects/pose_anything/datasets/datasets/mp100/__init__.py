@@ -6,6 +6,10 @@ from .transformer_base_dataset import TransformerBaseDataset
 from .transformer_dataset import TransformerPoseDataset
 
 __all__ = [
-    'FewShotKeypointDataset', 'FewShotBaseDataset', 'TransformerPoseDataset',
-    'TransformerBaseDataset', 'TestBaseDataset', 'TestPoseDataset'
+    "FewShotKeypointDataset",
+    "FewShotBaseDataset",
+    "TransformerPoseDataset",
+    "TransformerBaseDataset",
+    "TestBaseDataset",
+    "TestPoseDataset",
 ]

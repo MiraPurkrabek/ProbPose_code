@@ -11,17 +11,13 @@ from mmpose.testing import get_packed_inputs, get_pose_estimator_cfg
 from mmpose.utils import register_all_modules
 
 configs = [
-    'wholebody_2d_keypoint/dwpose/ubody/'
-    's1_dis/dwpose_l_dis_m_coco-ubody-256x192.py',
-    'wholebody_2d_keypoint/dwpose/ubody/'
-    's2_dis/dwpose_m-mm_coco-ubody-256x192.py',
-    'wholebody_2d_keypoint/dwpose/coco-wholebody/'
-    's1_dis/dwpose_l_dis_m_coco-256x192.py',
-    'wholebody_2d_keypoint/dwpose/coco-wholebody/'
-    's2_dis/dwpose_m-mm_coco-256x192.py',
+    "wholebody_2d_keypoint/dwpose/ubody/" "s1_dis/dwpose_l_dis_m_coco-ubody-256x192.py",
+    "wholebody_2d_keypoint/dwpose/ubody/" "s2_dis/dwpose_m-mm_coco-ubody-256x192.py",
+    "wholebody_2d_keypoint/dwpose/coco-wholebody/" "s1_dis/dwpose_l_dis_m_coco-256x192.py",
+    "wholebody_2d_keypoint/dwpose/coco-wholebody/" "s2_dis/dwpose_m-mm_coco-256x192.py",
 ]
 
-configs_with_devices = [(config, ('cpu', 'cuda')) for config in configs]
+configs_with_devices = [(config, ("cpu", "cuda")) for config in configs]
 
 
 class TestDWPoseDistiller(TestCase):
@@ -36,11 +32,12 @@ class TestDWPoseDistiller(TestCase):
         model_cfg.backbone.init_cfg = None
 
         from mmpose.models import build_pose_estimator
+
         model = build_pose_estimator(model_cfg)
         model = revert_sync_batchnorm(model)
         self.assertTrue(model.backbone)
         self.assertTrue(model.head)
-        if model_cfg.get('neck', None):
+        if model_cfg.get("neck", None):
             self.assertTrue(model.neck)
 
     @parameterized.expand(configs_with_devices)
@@ -55,14 +52,14 @@ class TestDWPoseDistiller(TestCase):
             model = build_pose_estimator(model_cfg)
             model = revert_sync_batchnorm(model)
 
-            if device == 'cuda':
+            if device == "cuda":
                 if not torch.cuda.is_available():
-                    return unittest.skip('test requires GPU and torch+cuda')
+                    return unittest.skip("test requires GPU and torch+cuda")
                 model = model.cuda()
 
             packed_inputs = get_packed_inputs(2, num_keypoints=133)
             data = model.data_preprocessor(packed_inputs, training=True)
-            losses = model.forward(**data, mode='loss')
+            losses = model.forward(**data, mode="loss")
             self.assertIsInstance(losses, dict)
 
     @parameterized.expand(configs_with_devices)
@@ -77,16 +74,16 @@ class TestDWPoseDistiller(TestCase):
             model = build_pose_estimator(model_cfg)
             model = revert_sync_batchnorm(model)
 
-            if device == 'cuda':
+            if device == "cuda":
                 if not torch.cuda.is_available():
-                    return unittest.skip('test requires GPU and torch+cuda')
+                    return unittest.skip("test requires GPU and torch+cuda")
                 model = model.cuda()
 
             packed_inputs = get_packed_inputs(2, num_keypoints=133)
             model.eval()
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, training=True)
-                batch_results = model.forward(**data, mode='predict')
+                batch_results = model.forward(**data, mode="predict")
                 self.assertEqual(len(batch_results), 2)
                 self.assertIsInstance(batch_results[0], PoseDataSample)
 
@@ -102,12 +99,12 @@ class TestDWPoseDistiller(TestCase):
             model = build_pose_estimator(model_cfg)
             model = revert_sync_batchnorm(model)
 
-            if device == 'cuda':
+            if device == "cuda":
                 if not torch.cuda.is_available():
-                    return unittest.skip('test requires GPU and torch+cuda')
+                    return unittest.skip("test requires GPU and torch+cuda")
                 model = model.cuda()
 
             packed_inputs = get_packed_inputs(2, num_keypoints=133)
             data = model.data_preprocessor(packed_inputs, training=True)
-            batch_results = model.forward(**data, mode='tensor')
+            batch_results = model.forward(**data, mode="tensor")
             self.assertIsInstance(batch_results, (tuple, torch.Tensor))

@@ -15,25 +15,21 @@ class TestFeatureMapProcessor(TestCase):
         feat_shapes: List[Tuple[int, int, int]] = [(32, 1, 1)],
     ):
 
-        feats = [
-            torch.rand((batch_size, ) + shape, dtype=torch.float32)
-            for shape in feat_shapes
-        ]
+        feats = [torch.rand((batch_size,) + shape, dtype=torch.float32) for shape in feat_shapes]
 
         return feats
 
     def test_init(self):
 
         neck = FeatureMapProcessor(select_index=0)
-        self.assertSequenceEqual(neck.select_index, (0, ))
+        self.assertSequenceEqual(neck.select_index, (0,))
 
         with self.assertRaises(AssertionError):
             neck = FeatureMapProcessor(scale_factor=0.0)
 
     def test_call(self):
 
-        inputs = self._get_feats(
-            batch_size=2, feat_shapes=[(2, 16, 16), (4, 8, 8), (8, 4, 4)])
+        inputs = self._get_feats(batch_size=2, feat_shapes=[(2, 16, 16), (4, 8, 8), (8, 4, 4)])
 
         neck = FeatureMapProcessor(select_index=0)
         output = neck(inputs)
@@ -51,8 +47,7 @@ class TestFeatureMapProcessor(TestCase):
         self.assertEqual(len(output), 1)
         self.assertSequenceEqual(output[0].shape, (2, 12, 8, 8))
 
-        neck = FeatureMapProcessor(
-            select_index=(2, 1), concat=True, scale_factor=2)
+        neck = FeatureMapProcessor(select_index=(2, 1), concat=True, scale_factor=2)
         output = neck(inputs)
         self.assertEqual(len(output), 1)
         self.assertSequenceEqual(output[0].shape, (2, 12, 8, 8))

@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 from mmcv.cnn import build_activation_layer, build_norm_layer
-from mmcv.cnn.bricks.transformer import (BaseTransformerLayer,
-                                         TransformerLayerSequence,
-                                         build_transformer_layer_sequence)
+from mmcv.cnn.bricks.transformer import BaseTransformerLayer, TransformerLayerSequence, build_transformer_layer_sequence
 from mmengine.model import BaseModule, xavier_init
 from mmengine.registry import MODELS
 
@@ -37,8 +35,8 @@ class Transformer(BaseModule):
     def init_weights(self):
         # follow the official DETR to init parameters
         for m in self.modules():
-            if hasattr(m, 'weight') and m.weight.dim() > 1:
-                xavier_init(m, distribution='uniform')
+            if hasattr(m, "weight") and m.weight.dim() > 1:
+                xavier_init(m, distribution="uniform")
         self._is_init = True
 
     def forward(self, x, mask, query_embed, pos_embed, mask_query):
@@ -75,21 +73,14 @@ class Transformer(BaseModule):
         bs, c, h, w = x.shape
         # use `view` instead of `flatten` for dynamically exporting to ONNX
         x = x.view(bs, c, -1).permute(2, 0, 1)  # [bs, c, h, w] -> [h*w, bs, c]
-        mask = mask.view(
-            bs, -1
-        )  # [bs, h, w] -> [bs, h*w] Note: this mask should be filled with
+        mask = mask.view(bs, -1)  # [bs, h, w] -> [bs, h*w] Note: this mask should be filled with
         # False, since all images are with the same shape.
-        pos_embed = pos_embed.view(bs, c, -1).permute(
-            2, 0, 1)  # positional embeding for memory, i.e., the query.
+        pos_embed = pos_embed.view(bs, c, -1).permute(2, 0, 1)  # positional embeding for memory, i.e., the query.
         memory = self.encoder(
-            query=x,
-            key=None,
-            value=None,
-            query_pos=pos_embed,
-            query_key_padding_mask=mask)  # output memory: [hw, bs, c]
+            query=x, key=None, value=None, query_pos=pos_embed, query_key_padding_mask=mask
+        )  # output memory: [hw, bs, c]
 
-        query_embed = query_embed.permute(
-            1, 0, 2)  # [bs, num_query, c] -> [num_query, bs, c]
+        query_embed = query_embed.permute(1, 0, 2)  # [bs, num_query, c] -> [num_query, bs, c]
         # target = torch.zeros_like(query_embed)
         # out_dec: [num_layers, num_query, bs, c]
         out_dec = self.decoder(
@@ -99,7 +90,8 @@ class Transformer(BaseModule):
             key_pos=pos_embed,
             # query_pos=query_embed,
             query_key_padding_mask=mask_query,
-            key_padding_mask=mask)
+            key_padding_mask=mask,
+        )
         out_dec = out_dec.transpose(1, 2)  # [decoder_layer, bs, num_query, c]
         memory = memory.permute(1, 2, 0).reshape(bs, c, h, w)
         return out_dec, memory
@@ -128,15 +120,17 @@ class DetrTransformerDecoderLayer(BaseTransformerLayer):
             Default：2.
     """
 
-    def __init__(self,
-                 attn_cfgs,
-                 feedforward_channels,
-                 ffn_dropout=0.0,
-                 operation_order=None,
-                 act_cfg=dict(type='ReLU', inplace=True),
-                 norm_cfg=dict(type='LN'),
-                 ffn_num_fcs=2,
-                 **kwargs):
+    def __init__(
+        self,
+        attn_cfgs,
+        feedforward_channels,
+        ffn_dropout=0.0,
+        operation_order=None,
+        act_cfg=dict(type="ReLU", inplace=True),
+        norm_cfg=dict(type="LN"),
+        ffn_num_fcs=2,
+        **kwargs
+    ):
         super(DetrTransformerDecoderLayer, self).__init__(
             attn_cfgs=attn_cfgs,
             feedforward_channels=feedforward_channels,
@@ -145,7 +139,8 @@ class DetrTransformerDecoderLayer(BaseTransformerLayer):
             act_cfg=act_cfg,
             norm_cfg=norm_cfg,
             ffn_num_fcs=ffn_num_fcs,
-            **kwargs)
+            **kwargs
+        )
         # assert len(operation_order) == 6
         # assert set(operation_order) == set(
         #     ['self_attn', 'norm', 'cross_attn', 'ffn'])
@@ -160,11 +155,10 @@ class DetrTransformerEncoder(TransformerLayerSequence):
             `LN`. Only used when `self.pre_norm` is `True`
     """
 
-    def __init__(self, *args, post_norm_cfg=dict(type='LN'), **kwargs):
+    def __init__(self, *args, post_norm_cfg=dict(type="LN"), **kwargs):
         super(DetrTransformerEncoder, self).__init__(*args, **kwargs)
         if post_norm_cfg is not None:
-            self.post_norm = build_norm_layer(
-                post_norm_cfg, self.embed_dims)[1] if self.pre_norm else None
+            self.post_norm = build_norm_layer(post_norm_cfg, self.embed_dims)[1] if self.pre_norm else None
         else:
             # assert not self.pre_norm, f'Use prenorm in ' \
             #                           f'{self.__class__.__name__},' \
@@ -193,17 +187,12 @@ class DetrTransformerDecoder(TransformerLayerSequence):
             `LN`.
     """
 
-    def __init__(self,
-                 *args,
-                 post_norm_cfg=dict(type='LN'),
-                 return_intermediate=False,
-                 **kwargs):
+    def __init__(self, *args, post_norm_cfg=dict(type="LN"), return_intermediate=False, **kwargs):
 
         super(DetrTransformerDecoder, self).__init__(*args, **kwargs)
         self.return_intermediate = return_intermediate
         if post_norm_cfg is not None:
-            self.post_norm = build_norm_layer(post_norm_cfg,
-                                              self.embed_dims)[1]
+            self.post_norm = build_norm_layer(post_norm_cfg, self.embed_dims)[1]
         else:
             self.post_norm = None
 
@@ -261,15 +250,17 @@ class DynamicConv(BaseModule):
             Default: None.
     """
 
-    def __init__(self,
-                 in_channels=256,
-                 feat_channels=64,
-                 out_channels=None,
-                 input_feat_shape=7,
-                 with_proj=True,
-                 act_cfg=dict(type='ReLU', inplace=True),
-                 norm_cfg=dict(type='LN'),
-                 init_cfg=None):
+    def __init__(
+        self,
+        in_channels=256,
+        feat_channels=64,
+        out_channels=None,
+        input_feat_shape=7,
+        with_proj=True,
+        act_cfg=dict(type="ReLU", inplace=True),
+        norm_cfg=dict(type="LN"),
+        init_cfg=None,
+    ):
         super(DynamicConv, self).__init__(init_cfg)
         self.in_channels = in_channels
         self.feat_channels = feat_channels
@@ -282,8 +273,7 @@ class DynamicConv(BaseModule):
 
         self.num_params_in = self.in_channels * self.feat_channels
         self.num_params_out = self.out_channels * self.feat_channels
-        self.dynamic_layer = nn.Linear(
-            self.in_channels, self.num_params_in + self.num_params_out)
+        self.dynamic_layer = nn.Linear(self.in_channels, self.num_params_in + self.num_params_out)
 
         self.norm_in = build_norm_layer(norm_cfg, self.feat_channels)[1]
         self.norm_out = build_norm_layer(norm_cfg, self.out_channels)[1]
@@ -314,10 +304,8 @@ class DynamicConv(BaseModule):
         input_feature = input_feature.permute(1, 0, 2)
         parameters = self.dynamic_layer(param_feature)
 
-        param_in = parameters[:, :self.num_params_in].view(
-            -1, self.in_channels, self.feat_channels)
-        param_out = parameters[:, -self.num_params_out:].view(
-            -1, self.feat_channels, self.out_channels)
+        param_in = parameters[:, : self.num_params_in].view(-1, self.in_channels, self.feat_channels)
+        param_out = parameters[:, -self.num_params_out :].view(-1, self.feat_channels, self.out_channels)
 
         # input_feature has shape (num_all_proposals, H*W, in_channels)
         # param_in has shape (num_all_proposals, in_channels, feat_channels)

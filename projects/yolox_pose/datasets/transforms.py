@@ -18,29 +18,27 @@ class PoseToDetConverter(BaseTransform):
 
     def transform(self, results: dict) -> dict:
 
-        results['seg_map_path'] = None
-        results['height'] = results['img_shape'][0]
-        results['width'] = results['img_shape'][1]
+        results["seg_map_path"] = None
+        results["height"] = results["img_shape"][0]
+        results["width"] = results["img_shape"][1]
 
-        num_instances = len(results.get('bbox', []))
+        num_instances = len(results.get("bbox", []))
 
         if num_instances == 0:
-            results['bbox'] = np.empty((0, 4), dtype=np.float32)
-            results['keypoints'] = np.empty(
-                (0, len(results['flip_indices']), 2), dtype=np.float32)
-            results['keypoints_visible'] = np.empty(
-                (0, len(results['flip_indices'])), dtype=np.int32)
-            results['category_id'] = []
+            results["bbox"] = np.empty((0, 4), dtype=np.float32)
+            results["keypoints"] = np.empty((0, len(results["flip_indices"]), 2), dtype=np.float32)
+            results["keypoints_visible"] = np.empty((0, len(results["flip_indices"])), dtype=np.int32)
+            results["category_id"] = []
 
-        results['gt_bboxes'] = BBoxKeypoints(
-            data=results['bbox'],
-            keypoints=results['keypoints'],
-            keypoints_visible=results['keypoints_visible'],
-            flip_indices=results['flip_indices'],
+        results["gt_bboxes"] = BBoxKeypoints(
+            data=results["bbox"],
+            keypoints=results["keypoints"],
+            keypoints_visible=results["keypoints_visible"],
+            flip_indices=results["flip_indices"],
         )
 
-        results['gt_ignore_flags'] = np.array([False] * num_instances)
-        results['gt_bboxes_labels'] = np.array(results['category_id']) - 1
+        results["gt_ignore_flags"] = np.array([False] * num_instances)
+        results["gt_bboxes_labels"] = np.array(results["category_id"]) - 1
 
         return results
 
@@ -48,25 +46,35 @@ class PoseToDetConverter(BaseTransform):
 @TRANSFORMS.register_module()
 class PackDetPoseInputs(PackDetInputs):
     mapping_table = {
-        'gt_bboxes': 'bboxes',
-        'gt_bboxes_labels': 'labels',
-        'gt_masks': 'masks',
-        'gt_keypoints': 'keypoints',
-        'gt_keypoints_visible': 'keypoints_visible'
+        "gt_bboxes": "bboxes",
+        "gt_bboxes_labels": "labels",
+        "gt_masks": "masks",
+        "gt_keypoints": "keypoints",
+        "gt_keypoints_visible": "keypoints_visible",
     }
 
-    def __init__(self,
-                 meta_keys=('id', 'img_id', 'img_path', 'ori_shape',
-                            'img_shape', 'scale_factor', 'flip',
-                            'flip_direction', 'flip_indices', 'raw_ann_info'),
-                 pack_transformed=False):
+    def __init__(
+        self,
+        meta_keys=(
+            "id",
+            "img_id",
+            "img_path",
+            "ori_shape",
+            "img_shape",
+            "scale_factor",
+            "flip",
+            "flip_direction",
+            "flip_indices",
+            "raw_ann_info",
+        ),
+        pack_transformed=False,
+    ):
         self.meta_keys = meta_keys
 
     def transform(self, results: dict) -> dict:
         # Add keypoints and their visibility to the results dictionary
-        results['gt_keypoints'] = results['gt_bboxes'].keypoints
-        results['gt_keypoints_visible'] = results[
-            'gt_bboxes'].keypoints_visible
+        results["gt_keypoints"] = results["gt_bboxes"].keypoints
+        results["gt_keypoints_visible"] = results["gt_bboxes"].keypoints_visible
 
         # Ensure all keys in `self.meta_keys` are in the `results` dictionary,
         # which is necessary for `PackDetInputs` but not guaranteed during
@@ -96,20 +104,24 @@ class FilterDetPoseAnnotations(FilterDetAnnotations):
         Returns:
             dict: Updated result dict.
         """
-        assert 'gt_bboxes' in results
-        gt_bboxes = results['gt_bboxes']
+        assert "gt_bboxes" in results
+        gt_bboxes = results["gt_bboxes"]
         if gt_bboxes.shape[0] == 0:
             return results
 
         tests = []
         if self.by_box:
-            tests.append(((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
-                          (gt_bboxes.heights > self.min_gt_bbox_wh[1]) &
-                          (gt_bboxes.num_keypoints > 0)).numpy())
+            tests.append(
+                (
+                    (gt_bboxes.widths > self.min_gt_bbox_wh[0])
+                    & (gt_bboxes.heights > self.min_gt_bbox_wh[1])
+                    & (gt_bboxes.num_keypoints > 0)
+                ).numpy()
+            )
 
         if self.by_mask:
-            assert 'gt_masks' in results
-            gt_masks = results['gt_masks']
+            assert "gt_masks" in results
+            gt_masks = results["gt_masks"]
             tests.append(gt_masks.areas >= self.min_gt_mask_area)
 
         keep = tests[0]
@@ -120,7 +132,7 @@ class FilterDetPoseAnnotations(FilterDetAnnotations):
             if self.keep_empty:
                 return None
 
-        keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags')
+        keys = ("gt_bboxes", "gt_bboxes_labels", "gt_masks", "gt_ignore_flags")
         for key in keys:
             if key in results:
                 results[key] = results[key][keep]

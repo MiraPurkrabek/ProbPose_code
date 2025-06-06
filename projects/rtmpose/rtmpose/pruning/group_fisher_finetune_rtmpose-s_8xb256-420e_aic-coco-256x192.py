@@ -7,18 +7,18 @@ finetune_lr (float): The lr rate to finetune. Usually, we directly use the lr
     rate of the pretrain.
 """
 
-_base_ = './group_fisher_prune_rtmpose-s_8xb256-420e_aic-coco-256x192.py'  # noqa
-pruned_path = 'https://download.openmmlab.com/mmrazor/v1/pruning/group_fisher/rtmpose-s/group_fisher_prune_rtmpose-s_8xb256-420e_aic-coco-256x192.pth'  # noqa
+_base_ = "./group_fisher_prune_rtmpose-s_8xb256-420e_aic-coco-256x192.py"  # noqa
+pruned_path = "https://download.openmmlab.com/mmrazor/v1/pruning/group_fisher/rtmpose-s/group_fisher_prune_rtmpose-s_8xb256-420e_aic-coco-256x192.pth"  # noqa
 finetune_lr = 4e-3
 ##############################################################################
 
 algorithm = _base_.model
-algorithm.init_cfg = dict(type='Pretrained', checkpoint=pruned_path)
+algorithm.init_cfg = dict(type="Pretrained", checkpoint=pruned_path)
 
 model = dict(
     _delete_=True,
-    _scope_='mmrazor',
-    type='GroupFisherSubModel',
+    _scope_="mmrazor",
+    type="GroupFisherSubModel",
     algorithm=algorithm,
 )
 

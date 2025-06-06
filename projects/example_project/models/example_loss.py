@@ -11,7 +11,7 @@ class ExampleLoss(KeypointMSELoss):
     """
 
     def __init__(self, **kwargs) -> None:
-        print('Initializing ExampleLoss...')
+        print("Initializing ExampleLoss...")
         super().__init__(**kwargs)
 
     def forward(self, output, target, target_weights=None, mask=None):

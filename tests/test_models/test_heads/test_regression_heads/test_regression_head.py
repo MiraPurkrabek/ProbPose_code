@@ -18,10 +18,7 @@ class TestRegressionHead(TestCase):
         feat_shapes: List[Tuple[int, int, int]] = [(32, 1, 1)],
     ):
 
-        feats = [
-            torch.rand((batch_size, ) + shape, dtype=torch.float32)
-            for shape in feat_shapes
-        ]
+        feats = [torch.rand((batch_size,) + shape, dtype=torch.float32) for shape in feat_shapes]
 
         return feats
 
@@ -35,12 +32,12 @@ class TestRegressionHead(TestCase):
         head = RegressionHead(
             in_channels=1024,
             num_joints=17,
-            decoder=dict(type='RegressionLabel', input_size=(192, 256)),
+            decoder=dict(type="RegressionLabel", input_size=(192, 256)),
         )
         self.assertIsNotNone(head.decoder)
 
     def test_predict(self):
-        decoder_cfg = dict(type='RegressionLabel', input_size=(192, 256))
+        decoder_cfg = dict(type="RegressionLabel", input_size=(192, 256))
 
         head = RegressionHead(
             in_channels=32,
@@ -49,17 +46,15 @@ class TestRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 1, 1)])
-        batch_data_samples = get_packed_inputs(
-            batch_size=2, with_heatmap=False)['data_samples']
+        batch_data_samples = get_packed_inputs(batch_size=2, with_heatmap=False)["data_samples"]
         preds = head.predict(feats, batch_data_samples)
 
         self.assertTrue(len(preds), 2)
         self.assertIsInstance(preds[0], InstanceData)
-        self.assertEqual(preds[0].keypoints.shape,
-                         batch_data_samples[0].gt_instances.keypoints.shape)
+        self.assertEqual(preds[0].keypoints.shape, batch_data_samples[0].gt_instances.keypoints.shape)
 
     def test_tta(self):
-        decoder_cfg = dict(type='RegressionLabel', input_size=(192, 256))
+        decoder_cfg = dict(type="RegressionLabel", input_size=(192, 256))
 
         # inputs transform: select
         head = RegressionHead(
@@ -69,16 +64,12 @@ class TestRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 1, 1)])
-        batch_data_samples = get_packed_inputs(
-            batch_size=2, with_heatmap=False)['data_samples']
-        preds = head.predict([feats, feats],
-                             batch_data_samples,
-                             test_cfg=dict(flip_test=True, shift_coords=True))
+        batch_data_samples = get_packed_inputs(batch_size=2, with_heatmap=False)["data_samples"]
+        preds = head.predict([feats, feats], batch_data_samples, test_cfg=dict(flip_test=True, shift_coords=True))
 
         self.assertTrue(len(preds), 2)
         self.assertIsInstance(preds[0], InstanceData)
-        self.assertEqual(preds[0].keypoints.shape,
-                         batch_data_samples[0].gt_instances.keypoints.shape)
+        self.assertEqual(preds[0].keypoints.shape, batch_data_samples[0].gt_instances.keypoints.shape)
 
     def test_loss(self):
         head = RegressionHead(
@@ -87,14 +78,13 @@ class TestRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 1, 1)])
-        batch_data_samples = get_packed_inputs(
-            batch_size=2, with_heatmap=False)['data_samples']
+        batch_data_samples = get_packed_inputs(batch_size=2, with_heatmap=False)["data_samples"]
         losses = head.loss(feats, batch_data_samples)
 
-        self.assertIsInstance(losses['loss_kpt'], torch.Tensor)
-        self.assertEqual(losses['loss_kpt'].shape, torch.Size())
-        self.assertIsInstance(losses['acc_pose'], torch.Tensor)
+        self.assertIsInstance(losses["loss_kpt"], torch.Tensor)
+        self.assertEqual(losses["loss_kpt"].shape, torch.Size())
+        self.assertIsInstance(losses["acc_pose"], torch.Tensor)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

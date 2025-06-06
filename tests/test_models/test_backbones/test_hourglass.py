@@ -15,16 +15,11 @@ class TestHourglass(TestCase):
 
         with self.assertRaises(AssertionError):
             # len(stage_channels) should equal len(stage_blocks)
-            HourglassNet(
-                stage_channels=[256, 256, 384, 384, 384],
-                stage_blocks=[2, 2, 2, 2, 2, 4])
+            HourglassNet(stage_channels=[256, 256, 384, 384, 384], stage_blocks=[2, 2, 2, 2, 2, 4])
 
         with self.assertRaises(AssertionError):
             # len(stage_channels) should larger than downsample_times
-            HourglassNet(
-                downsample_times=5,
-                stage_channels=[256, 256, 384, 384, 384],
-                stage_blocks=[2, 2, 2, 2, 2])
+            HourglassNet(downsample_times=5, stage_channels=[256, 256, 384, 384, 384], stage_blocks=[2, 2, 2, 2, 2])
 
         # Test HourglassNet-52
         model = HourglassNet(num_stacks=1)
@@ -54,8 +49,7 @@ class TestHourglass(TestCase):
 
         with self.assertRaises(AssertionError):
             # len(stage_channels) should larger than downsample_times
-            HourglassAENet(
-                downsample_times=5, stage_channels=[256, 256, 384, 384, 384])
+            HourglassAENet(downsample_times=5, stage_channels=[256, 256, 384, 384, 384])
 
         # num_stack=1
         model = HourglassAENet(num_stacks=1)

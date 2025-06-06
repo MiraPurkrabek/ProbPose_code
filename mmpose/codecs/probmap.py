@@ -6,15 +6,20 @@ import numpy as np
 
 from mmpose.registry import KEYPOINT_CODECS
 from .base import BaseKeypointCodec
-from .utils import (generate_offset_heatmap, generate_probmaps,
-                    generate_udp_gaussian_heatmaps, get_heatmap_expected_value,
-                    get_heatmap_maximum, refine_keypoints_dark_udp)
+from .utils import (
+    generate_offset_heatmap,
+    generate_probmaps,
+    generate_udp_gaussian_heatmaps,
+    get_heatmap_expected_value,
+    get_heatmap_maximum,
+    refine_keypoints_dark_udp,
+)
 
 
 @KEYPOINT_CODECS.register_module()
 class ProbMap(BaseKeypointCodec):
     r"""Generate per-pixel expected OKS heatmaps for keypoint detection.
-    See the paper: `ProbPose: A Probabilistic Approach to 2D Human Pose Estimation` 
+    See the paper: `ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`
     by Purkrabek et al. (2025) for details.
 
     Note:
@@ -52,44 +57,51 @@ class ProbMap(BaseKeypointCodec):
         blur_kernel_size (int): The Gaussian blur kernel size of the heatmap
             modulation in DarkPose. Defaults to 11
 
-    .. _`ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`: 
+    .. _`ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`:
         https://arxiv.org/abs/2412.02254
     """
 
-    label_mapping_table = dict(keypoint_weights='keypoint_weights', )
-    field_mapping_table = dict(heatmaps='heatmaps', )
+    label_mapping_table = dict(
+        keypoint_weights="keypoint_weights",
+    )
+    field_mapping_table = dict(
+        heatmaps="heatmaps",
+    )
 
-    def __init__(self,
-                 input_size: Tuple[int, int],
-                 heatmap_size: Tuple[int, int],
-                 heatmap_type: str = 'gaussian',
-                 sigma: float = 2.,
-                 radius_factor: float = 0.0546875,
-                 blur_kernel_size: int = 11,
-                 increase_sigma_with_padding=False,
-                 ) -> None:
+    def __init__(
+        self,
+        input_size: Tuple[int, int],
+        heatmap_size: Tuple[int, int],
+        heatmap_type: str = "gaussian",
+        sigma: float = 2.0,
+        radius_factor: float = 0.0546875,
+        blur_kernel_size: int = 11,
+        increase_sigma_with_padding=False,
+    ) -> None:
         super().__init__()
         self.input_size = input_size
         self.heatmap_size = heatmap_size
         self.radius_factor = radius_factor
         self.heatmap_type = heatmap_type
         self.blur_kernel_size = blur_kernel_size
-        self.scale_factor = ((np.array(input_size) - 1) /
-                             (np.array(heatmap_size) - 1)).astype(np.float32)
+        self.scale_factor = ((np.array(input_size) - 1) / (np.array(heatmap_size) - 1)).astype(np.float32)
         self.increase_sigma_with_padding = increase_sigma_with_padding
         self.sigma = sigma
 
-        if self.heatmap_type not in {'gaussian', 'combined'}:
+        if self.heatmap_type not in {"gaussian", "combined"}:
             raise ValueError(
-                f'{self.__class__.__name__} got invalid `heatmap_type` value'
-                f'{self.heatmap_type}. Should be one of '
-                '{"gaussian", "combined"}')
+                f"{self.__class__.__name__} got invalid `heatmap_type` value"
+                f"{self.heatmap_type}. Should be one of "
+                '{"gaussian", "combined"}'
+            )
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None,
-               id_similarity: Optional[float] = 0.0,
-               keypoints_visibility: Optional[np.ndarray] = None) -> dict:
+    def encode(
+        self,
+        keypoints: np.ndarray,
+        keypoints_visible: Optional[np.ndarray] = None,
+        id_similarity: Optional[float] = 0.0,
+        keypoints_visibility: Optional[np.ndarray] = None,
+    ) -> dict:
         """Encode keypoints into heatmaps. Note that the original keypoint
         coordinates should be in the input image space.
 
@@ -113,25 +125,23 @@ class ProbMap(BaseKeypointCodec):
             - keypoint_weights (np.ndarray): The target weights in shape
                 (K,)
         """
-        assert keypoints.shape[0] == 1, (
-            f'{self.__class__.__name__} only support single-instance '
-            'keypoint encoding')
-        
+        assert keypoints.shape[0] == 1, f"{self.__class__.__name__} only support single-instance " "keypoint encoding"
+
         if keypoints_visibility is None:
             keypoints_visibility = np.zeros(keypoints.shape[:2], dtype=np.float32)
 
         if keypoints_visible is None:
             keypoints_visible = np.ones(keypoints.shape[:2], dtype=np.float32)
 
-        
         heatmaps, keypoint_weights = generate_probmaps(
             heatmap_size=self.heatmap_size,
             keypoints=keypoints / self.scale_factor,
             keypoints_visible=keypoints_visible,
-            sigma=self.sigma,)
+            sigma=self.sigma,
+        )
 
         annotated = keypoints_visible > 0
-        
+
         in_image = np.logical_and(
             keypoints[:, :, 0] >= 0,
             keypoints[:, :, 0] < self.input_size[0],
@@ -144,7 +154,7 @@ class ProbMap(BaseKeypointCodec):
             in_image,
             keypoints[:, :, 1] < self.input_size[1],
         )
-        
+
         encoded = dict(
             heatmaps=heatmaps,
             keypoint_weights=keypoint_weights,
@@ -174,16 +184,15 @@ class ProbMap(BaseKeypointCodec):
         heatmaps = encoded.copy()
         W, H = self.heatmap_size
 
-        if self.heatmap_type == 'gaussian':
-            
+        if self.heatmap_type == "gaussian":
+
             keypoints, scores = get_heatmap_expected_value(heatmaps)
 
             # unsqueeze the instance dimension for single-instance results
             keypoints = keypoints[None]
             scores = scores[None]
-            
 
-        elif self.heatmap_type == 'combined':
+        elif self.heatmap_type == "combined":
             _K, H, W = heatmaps.shape
             K = _K // 3
 

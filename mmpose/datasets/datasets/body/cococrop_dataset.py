@@ -71,4 +71,4 @@ class CocoCropDataset(BaseCocoStyleDataset):
             image. Default: 1000.
     """
 
-    METAINFO: dict = dict(from_file='configs/_base_/datasets/coco_crop.py')
+    METAINFO: dict = dict(from_file="configs/_base_/datasets/coco_crop.py")

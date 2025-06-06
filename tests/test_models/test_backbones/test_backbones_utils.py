@@ -5,8 +5,7 @@ import torch
 from torch.nn.modules import GroupNorm
 from torch.nn.modules.batchnorm import _BatchNorm
 
-from mmpose.models.backbones.utils import (InvertedResidual, SELayer,
-                                           channel_shuffle, make_divisible)
+from mmpose.models.backbones.utils import InvertedResidual, SELayer, channel_shuffle, make_divisible
 
 
 class TestBackboneUtils(TestCase):
@@ -33,8 +32,7 @@ class TestBackboneUtils(TestCase):
 
     def test_channel_shuffle(self):
         x = torch.randn(1, 24, 56, 56)
-        with self.assertRaisesRegex(
-                AssertionError, 'num_channels should be divisible by groups'):
+        with self.assertRaisesRegex(AssertionError, "num_channels should be divisible by groups"):
             channel_shuffle(x, 7)
 
         groups = 3
@@ -44,8 +42,7 @@ class TestBackboneUtils(TestCase):
         # test the output value when groups = 3
         for b in range(batch_size):
             for c in range(num_channels):
-                c_out = c % channels_per_group * groups + \
-                        c // channels_per_group
+                c_out = c % channels_per_group * groups + c // channels_per_group
                 for i in range(height):
                     for j in range(width):
                         self.assertEqual(x[b, c, i, j], out[b, c_out, i, j])
@@ -69,7 +66,7 @@ class TestBackboneUtils(TestCase):
         block = InvertedResidual(16, 16, 32, stride=1)
         x = torch.randn(1, 16, 56, 56)
         x_out = block(x)
-        self.assertIsNone(getattr(block, 'se', None))
+        self.assertIsNone(getattr(block, "se", None))
         self.assertTrue(block.with_res_shortcut)
         self.assertEqual(x_out.shape, torch.Size((1, 16, 56, 56)))
 
@@ -92,12 +89,11 @@ class TestBackboneUtils(TestCase):
         block = InvertedResidual(32, 16, 32, with_expand_conv=False)
         x = torch.randn(1, 32, 56, 56)
         x_out = block(x)
-        self.assertIsNone(getattr(block, 'expand_conv', None))
+        self.assertIsNone(getattr(block, "expand_conv", None))
         self.assertEqual(x_out.shape, torch.Size((1, 16, 56, 56)))
 
         # Test InvertedResidual forward with GroupNorm
-        block = InvertedResidual(
-            16, 16, 32, norm_cfg=dict(type='GN', num_groups=2))
+        block = InvertedResidual(16, 16, 32, norm_cfg=dict(type="GN", num_groups=2))
         x = torch.randn(1, 16, 56, 56)
         x_out = block(x)
         for m in block.modules():
@@ -106,7 +102,7 @@ class TestBackboneUtils(TestCase):
         self.assertEqual(x_out.shape, torch.Size((1, 16, 56, 56)))
 
         # Test InvertedResidual forward with HSigmoid
-        block = InvertedResidual(16, 16, 32, act_cfg=dict(type='HSigmoid'))
+        block = InvertedResidual(16, 16, 32, act_cfg=dict(type="HSigmoid"))
         x = torch.randn(1, 16, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, torch.Size((1, 16, 56, 56)))

@@ -13,5 +13,5 @@ class CocoDataset(MMPoseCocoDataset):
     @force_full_init
     def prepare_data(self, idx) -> Any:
         data_info = self.get_data_info(idx)
-        data_info['dataset'] = self
+        data_info["dataset"] = self
         return self.pipeline(data_info)

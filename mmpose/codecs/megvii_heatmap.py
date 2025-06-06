@@ -39,8 +39,12 @@ class MegviiHeatmap(BaseKeypointCodec):
     .. _`CPN`: https://arxiv.org/abs/1711.07319
     """
 
-    label_mapping_table = dict(keypoint_weights='keypoint_weights', )
-    field_mapping_table = dict(heatmaps='heatmaps', )
+    label_mapping_table = dict(
+        keypoint_weights="keypoint_weights",
+    )
+    field_mapping_table = dict(
+        heatmaps="heatmaps",
+    )
 
     def __init__(
         self,
@@ -53,12 +57,9 @@ class MegviiHeatmap(BaseKeypointCodec):
         self.input_size = input_size
         self.heatmap_size = heatmap_size
         self.kernel_size = kernel_size
-        self.scale_factor = (np.array(input_size) /
-                             heatmap_size).astype(np.float32)
+        self.scale_factor = (np.array(input_size) / heatmap_size).astype(np.float32)
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None) -> dict:
+    def encode(self, keypoints: np.ndarray, keypoints_visible: Optional[np.ndarray] = None) -> dict:
         """Encode keypoints into heatmaps. Note that the original keypoint
         coordinates should be in the input image space.
 
@@ -78,9 +79,7 @@ class MegviiHeatmap(BaseKeypointCodec):
         N, K, _ = keypoints.shape
         W, H = self.heatmap_size
 
-        assert N == 1, (
-            f'{self.__class__.__name__} only support single-instance '
-            'keypoint encoding')
+        assert N == 1, f"{self.__class__.__name__} only support single-instance " "keypoint encoding"
 
         heatmaps = np.zeros((K, H, W), dtype=np.float32)
         keypoint_weights = keypoints_visible.copy()
@@ -96,12 +95,12 @@ class MegviiHeatmap(BaseKeypointCodec):
                 keypoint_weights[n, k] = 0
                 continue
 
-            heatmaps[k, ky, kx] = 1.
+            heatmaps[k, ky, kx] = 1.0
             kernel_size = (self.kernel_size, self.kernel_size)
             heatmaps[k] = cv2.GaussianBlur(heatmaps[k], kernel_size, 0)
 
             # normalize the heatmap
-            heatmaps[k] = heatmaps[k] / heatmaps[k, ky, kx] * 255.
+            heatmaps[k] = heatmaps[k] / heatmaps[k, ky, kx] * 255.0
 
         encoded = dict(heatmaps=heatmaps, keypoint_weights=keypoint_weights)
 
@@ -131,11 +130,8 @@ class MegviiHeatmap(BaseKeypointCodec):
             px = int(keypoints[k, 0])
             py = int(keypoints[k, 1])
             if 1 < px < W - 1 and 1 < py < H - 1:
-                diff = np.array([
-                    heatmap[py][px + 1] - heatmap[py][px - 1],
-                    heatmap[py + 1][px] - heatmap[py - 1][px]
-                ])
-                keypoints[k] += (np.sign(diff) * 0.25 + 0.5)
+                diff = np.array([heatmap[py][px + 1] - heatmap[py][px - 1], heatmap[py + 1][px] - heatmap[py - 1][px]])
+                keypoints[k] += np.sign(diff) * 0.25 + 0.5
 
         scores = scores / 255.0 + 0.5
 

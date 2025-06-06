@@ -23,12 +23,14 @@ class CombinedDataset(BaseDataset):
             factors for each dataset. Defaults to None
     """
 
-    def __init__(self,
-                 metainfo: dict,
-                 datasets: list,
-                 pipeline: List[Union[dict, Callable]] = [],
-                 sample_ratio_factor: Optional[List[float]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        metainfo: dict,
+        datasets: list,
+        pipeline: List[Union[dict, Callable]] = [],
+        sample_ratio_factor: Optional[List[float]] = None,
+        **kwargs,
+    ):
 
         self.datasets = []
         self.resample = sample_ratio_factor is not None
@@ -39,16 +41,16 @@ class CombinedDataset(BaseDataset):
 
         self._lens = [len(dataset) for dataset in self.datasets]
         if self.resample:
-            assert len(sample_ratio_factor) == len(datasets), f'the length ' \
-                f'of `sample_ratio_factor` {len(sample_ratio_factor)} does ' \
-                f'not match the length of `datasets` {len(datasets)}'
-            assert min(sample_ratio_factor) >= 0.0, 'the ratio values in ' \
-                '`sample_ratio_factor` should not be negative.'
+            assert len(sample_ratio_factor) == len(datasets), (
+                f"the length "
+                f"of `sample_ratio_factor` {len(sample_ratio_factor)} does "
+                f"not match the length of `datasets` {len(datasets)}"
+            )
+            assert min(sample_ratio_factor) >= 0.0, (
+                "the ratio values in " "`sample_ratio_factor` should not be negative."
+            )
             self._lens_ori = self._lens
-            self._lens = [
-                round(l * sample_ratio_factor[i])
-                for i, l in enumerate(self._lens_ori)
-            ]
+            self._lens = [round(l * sample_ratio_factor[i]) for i, l in enumerate(self._lens_ori)]
 
         self._len = sum(self._lens)
 
@@ -79,9 +81,7 @@ class CombinedDataset(BaseDataset):
                 the sub-dataset
         """
         if index >= len(self) or index < -len(self):
-            raise ValueError(
-                f'index({index}) is out of bounds for dataset with '
-                f'length({len(self)}).')
+            raise ValueError(f"index({index}) is out of bounds for dataset with " f"length({len(self)}).")
 
         if index < 0:
             index = index + len(self)
@@ -92,8 +92,7 @@ class CombinedDataset(BaseDataset):
             subset_index += 1
 
         if self.resample:
-            gap = (self._lens_ori[subset_index] -
-                   1e-4) / self._lens[subset_index]
+            gap = (self._lens_ori[subset_index] - 1e-4) / self._lens[subset_index]
             index = round(gap * index + np.random.rand() * gap - 0.5)
 
         return subset_index, index
@@ -114,7 +113,7 @@ class CombinedDataset(BaseDataset):
         # the assignment of 'dataset' should not be performed within the
         # `get_data_info` function. Otherwise, it can lead to the mixed
         # data augmentation process getting stuck.
-        data_info['dataset'] = self
+        data_info["dataset"] = self
 
         return self.pipeline(data_info)
 
@@ -130,14 +129,11 @@ class CombinedDataset(BaseDataset):
         # Get data sample processed by ``subset.pipeline``
         data_info = self.datasets[subset_idx][sample_idx]
 
-        if 'dataset' in data_info:
-            data_info.pop('dataset')
+        if "dataset" in data_info:
+            data_info.pop("dataset")
 
         # Add metainfo items that are required in the pipeline and the model
-        metainfo_keys = [
-            'upper_body_ids', 'lower_body_ids', 'flip_pairs',
-            'dataset_keypoint_weights', 'flip_indices'
-        ]
+        metainfo_keys = ["upper_body_ids", "lower_body_ids", "flip_pairs", "dataset_keypoint_weights", "flip_indices"]
 
         for key in metainfo_keys:
             data_info[key] = deepcopy(self._metainfo[key])

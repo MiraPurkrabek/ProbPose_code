@@ -20,10 +20,23 @@ from .udp_heatmap import UDPHeatmap
 from .video_pose_lifting import VideoPoseLifting
 
 __all__ = [
-    'MSRAHeatmap', 'MegviiHeatmap', 'UDPHeatmap', 'RegressionLabel',
-    'SimCCLabel', 'IntegralRegressionLabel', 'AssociativeEmbedding', 'SPR',
-    'DecoupledHeatmap', 'VideoPoseLifting', 'ImagePoseLifting',
-    'MotionBERTLabel', 'YOLOXPoseAnnotationProcessor', 'EDPoseLabel',
-    'Hand3DHeatmap', 'DoubleProbMap', 'ProbMap', 'UDPExpMaxHeatmap',
-    'ArgMaxProbMap'
+    "MSRAHeatmap",
+    "MegviiHeatmap",
+    "UDPHeatmap",
+    "RegressionLabel",
+    "SimCCLabel",
+    "IntegralRegressionLabel",
+    "AssociativeEmbedding",
+    "SPR",
+    "DecoupledHeatmap",
+    "VideoPoseLifting",
+    "ImagePoseLifting",
+    "MotionBERTLabel",
+    "YOLOXPoseAnnotationProcessor",
+    "EDPoseLabel",
+    "Hand3DHeatmap",
+    "DoubleProbMap",
+    "ProbMap",
+    "UDPExpMaxHeatmap",
+    "ArgMaxProbMap",
 ]

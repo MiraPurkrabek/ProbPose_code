@@ -52,4 +52,4 @@ class Face300WLPDataset(BaseCocoStyleDataset):
             image. Default: 1000.
     """
 
-    METAINFO: dict = dict(from_file='configs/_base_/datasets/300wlp.py')
+    METAINFO: dict = dict(from_file="configs/_base_/datasets/300wlp.py")

@@ -27,15 +27,11 @@ def _rand_poses(num_boxes, h, w):
 class TestVisualizationHook(TestCase):
 
     def setUp(self) -> None:
-        PoseLocalVisualizer.get_instance('test_visualization_hook')
+        PoseLocalVisualizer.get_instance("test_visualization_hook")
 
         data_sample = PoseDataSample()
-        data_sample.set_metainfo({
-            'img_path':
-            osp.join(
-                osp.dirname(__file__), '../../data/coco/000000000785.jpg')
-        })
-        self.data_batch = {'data_samples': [data_sample] * 2}
+        data_sample.set_metainfo({"img_path": osp.join(osp.dirname(__file__), "../../data/coco/000000000785.jpg")})
+        self.data_batch = {"data_samples": [data_sample] * 2}
 
         pred_instances = InstanceData()
         pred_instances.keypoints = _rand_poses(5, 10, 12)
@@ -59,15 +55,15 @@ class TestVisualizationHook(TestCase):
         self.assertEqual(hook._test_index, 2)
 
         # test
-        timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-        out_dir = timestamp + '1'
+        timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        out_dir = timestamp + "1"
         runner.work_dir = timestamp
-        runner.timestamp = '1'
+        runner.timestamp = "1"
         hook = PoseVisualizationHook(enable=False, out_dir=out_dir)
         hook.after_test_iter(runner, 1, self.data_batch, self.outputs)
-        self.assertTrue(not osp.exists(f'{timestamp}/1/{out_dir}'))
+        self.assertTrue(not osp.exists(f"{timestamp}/1/{out_dir}"))
 
         hook = PoseVisualizationHook(enable=True, out_dir=out_dir)
         hook.after_test_iter(runner, 1, self.data_batch, self.outputs)
-        self.assertTrue(osp.exists(f'{timestamp}/1/{out_dir}'))
-        shutil.rmtree(f'{timestamp}')
+        self.assertTrue(osp.exists(f"{timestamp}/1/{out_dir}"))
+        shutil.rmtree(f"{timestamp}")

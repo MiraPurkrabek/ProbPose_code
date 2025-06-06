@@ -3,17 +3,14 @@ from unittest import TestCase
 
 import torch
 
-from mmpose.models.backbones.pvt import (PVTEncoderLayer,
-                                         PyramidVisionTransformer,
-                                         PyramidVisionTransformerV2)
+from mmpose.models.backbones.pvt import PVTEncoderLayer, PyramidVisionTransformer, PyramidVisionTransformerV2
 
 
 class TestPVT(TestCase):
 
     def test_pvt_block(self):
         # test PVT structure and forward
-        block = PVTEncoderLayer(
-            embed_dims=64, num_heads=4, feedforward_channels=256)
+        block = PVTEncoderLayer(embed_dims=64, num_heads=4, feedforward_channels=256)
         self.assertEqual(block.ffn.embed_dims, 64)
         self.assertEqual(block.attn.num_heads, 4)
         self.assertEqual(block.ffn.feedforward_channels, 256)
@@ -29,8 +26,7 @@ class TestPVT(TestCase):
             PyramidVisionTransformer(pretrain_img_size=(224, 224, 224))
 
         # test padding
-        model = PyramidVisionTransformer(
-            paddings=['corner', 'corner', 'corner', 'corner'])
+        model = PyramidVisionTransformer(paddings=["corner", "corner", "corner", "corner"])
         temp = torch.randn((1, 3, 32, 32))
         outs = model(temp)
         self.assertEqual(outs[0].shape, (1, 64, 8, 8))
@@ -40,8 +36,7 @@ class TestPVT(TestCase):
 
         # Test absolute position embedding
         temp = torch.randn((1, 3, 224, 224))
-        model = PyramidVisionTransformer(
-            pretrain_img_size=224, use_abs_pos_embed=True)
+        model = PyramidVisionTransformer(pretrain_img_size=224, use_abs_pos_embed=True)
         model.init_weights()
         model(temp)
 
@@ -88,14 +83,13 @@ class TestPVT(TestCase):
             embed_dims=32,
             num_layers=[2, 2, 2, 2],
             init_cfg=dict(
-                type='Pretrained',
-                checkpoint='https://github.com/whai362/PVT/'
-                'releases/download/v2/pvt_v2_b0.pth'))
+                type="Pretrained", checkpoint="https://github.com/whai362/PVT/" "releases/download/v2/pvt_v2_b0.pth"
+            ),
+        )
         model.init_weights()
 
         # test init weights from scratch
-        model = PyramidVisionTransformerV2(
-            embed_dims=32, num_layers=[2, 2, 2, 2])
+        model = PyramidVisionTransformerV2(embed_dims=32, num_layers=[2, 2, 2, 2])
         model.init_weights()
 
         # Test normal inference

@@ -15,11 +15,9 @@ class TestSEResnet(TestCase):
     @staticmethod
     def all_zeros(modules):
         """Check if the weight(and bias) is all zero."""
-        weight_zero = torch.equal(modules.weight.data,
-                                  torch.zeros_like(modules.weight.data))
-        if hasattr(modules, 'bias'):
-            bias_zero = torch.equal(modules.bias.data,
-                                    torch.zeros_like(modules.bias.data))
+        weight_zero = torch.equal(modules.weight.data, torch.zeros_like(modules.weight.data))
+        if hasattr(modules, "bias"):
+            bias_zero = torch.equal(modules.bias.data, torch.zeros_like(modules.bias.data))
         else:
             bias_zero = True
 
@@ -51,7 +49,7 @@ class TestSEResnet(TestCase):
 
         with self.assertRaises(AssertionError):
             # Style must be in ['pytorch', 'caffe']
-            SEBottleneck(64, 64, style='tensorflow')
+            SEBottleneck(64, 64, style="tensorflow")
 
         # Test SEBottleneck with checkpoint forward
         block = SEBottleneck(64, 64, with_cp=True)
@@ -61,10 +59,10 @@ class TestSEResnet(TestCase):
         self.assertEqual(x_out.shape, torch.Size([1, 64, 56, 56]))
 
         # Test Bottleneck style
-        block = SEBottleneck(64, 256, stride=2, style='pytorch')
+        block = SEBottleneck(64, 256, stride=2, style="pytorch")
         self.assertEqual(block.conv1.stride, (1, 1))
         self.assertEqual(block.conv2.stride, (2, 2))
-        block = SEBottleneck(64, 256, stride=2, style='caffe')
+        block = SEBottleneck(64, 256, stride=2, style="caffe")
         self.assertEqual(block.conv1.stride, (2, 2))
         self.assertEqual(block.conv2.stride, (1, 1))
 
@@ -109,8 +107,7 @@ class TestSEResnet(TestCase):
         self.assertEqual(x_out.shape, torch.Size([1, 256, 28, 28]))
 
         # Test ResLayer of 3 SEBottleneck with stride=2 and average downsample
-        layer = ResLayer(
-            SEBottleneck, 3, 64, 256, stride=2, avg_down=True, se_ratio=8)
+        layer = ResLayer(SEBottleneck, 3, 64, 256, stride=2, avg_down=True, se_ratio=8)
         self.assertIsInstance(layer[0].downsample[0], AvgPool2d)
         self.assertEqual(layer[0].downsample[1].out_channels, 256)
         self.assertEqual(layer[0].downsample[1].stride, (1, 1))
@@ -136,11 +133,11 @@ class TestSEResnet(TestCase):
 
         with self.assertRaises(AssertionError):
             # len(strides) == len(dilations) == num_stages
-            SEResNet(50, strides=(1, ), dilations=(1, 1), num_stages=3)
+            SEResNet(50, strides=(1,), dilations=(1, 1), num_stages=3)
 
         with self.assertRaises(AssertionError):
             # Style must be in ['pytorch', 'caffe']
-            SEResNet(50, style='tensorflow')
+            SEResNet(50, style="tensorflow")
 
         # Test SEResNet50 norm_eval=True
         model = SEResNet(50, norm_eval=True)
@@ -149,7 +146,7 @@ class TestSEResnet(TestCase):
         self.assertTrue(self.check_norm_state(model.modules(), False))
 
         # Test SEResNet50 with torchvision pretrained weight
-        init_cfg = dict(type='Pretrained', checkpoint='torchvision://resnet50')
+        init_cfg = dict(type="Pretrained", checkpoint="torchvision://resnet50")
         model = SEResNet(depth=50, norm_eval=True, init_cfg=init_cfg)
         model.train()
         self.assertTrue(self.check_norm_state(model.modules(), False))
@@ -164,7 +161,7 @@ class TestSEResnet(TestCase):
             for param in layer.parameters():
                 self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -197,7 +194,7 @@ class TestSEResnet(TestCase):
         self.assertEqual(feat[2].shape, torch.Size([1, 1024, 14, 14]))
 
         # Test SEResNet50 with layers 3 (top feature maps) out forward
-        model = SEResNet(50, out_indices=(3, ))
+        model = SEResNet(50, out_indices=(3,))
         model.init_weights()
         model.train()
 

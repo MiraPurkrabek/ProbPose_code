@@ -72,7 +72,7 @@ class TestVGG(TestCase):
         self.assertEqual(feat[5].shape, (1, 10))
 
         # Test VGG11BN forward
-        model = VGG(11, norm_cfg=dict(type='BN'), out_indices=(0, 1, 2, 3, 4))
+        model = VGG(11, norm_cfg=dict(type="BN"), out_indices=(0, 1, 2, 3, 4))
         model.init_weights()
         model.train()
 
@@ -86,11 +86,7 @@ class TestVGG(TestCase):
         self.assertEqual(feat[4].shape, (1, 512, 7, 7))
 
         # Test VGG11BN forward with classifiers
-        model = VGG(
-            11,
-            num_classes=10,
-            norm_cfg=dict(type='BN'),
-            out_indices=(0, 1, 2, 3, 4, 5))
+        model = VGG(11, num_classes=10, norm_cfg=dict(type="BN"), out_indices=(0, 1, 2, 3, 4, 5))
         model.init_weights()
         model.train()
 

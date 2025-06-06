@@ -30,23 +30,23 @@ class TestMobilenetV3(TestCase):
     def test_mobilenetv3_backbone(self):
         with self.assertRaises(AssertionError):
             # arch must in [small, big]
-            MobileNetV3(arch='others')
+            MobileNetV3(arch="others")
 
         with self.assertRaises(ValueError):
             # frozen_stages must less than 12 when arch is small
-            MobileNetV3(arch='small', frozen_stages=12)
+            MobileNetV3(arch="small", frozen_stages=12)
 
         with self.assertRaises(ValueError):
             # frozen_stages must less than 16 when arch is big
-            MobileNetV3(arch='big', frozen_stages=16)
+            MobileNetV3(arch="big", frozen_stages=16)
 
         with self.assertRaises(ValueError):
             # max out_indices must less than 11 when arch is small
-            MobileNetV3(arch='small', out_indices=(11, ))
+            MobileNetV3(arch="small", out_indices=(11,))
 
         with self.assertRaises(ValueError):
             # max out_indices must less than 15 when arch is big
-            MobileNetV3(arch='big', out_indices=(15, ))
+            MobileNetV3(arch="big", out_indices=(15,))
 
         # Test MobileNetv3
         model = MobileNetV3()
@@ -61,7 +61,7 @@ class TestMobilenetV3(TestCase):
         for param in model.conv1.parameters():
             self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -96,8 +96,8 @@ class TestMobilenetV3(TestCase):
 
         # Test MobileNetv3 forward with small arch and GroupNorm
         model = MobileNetV3(
-            out_indices=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-            norm_cfg=dict(type='GN', num_groups=2, requires_grad=True))
+            out_indices=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), norm_cfg=dict(type="GN", num_groups=2, requires_grad=True)
+        )
         for m in model.modules():
             if self.is_norm(m):
                 self.assertIsInstance(m, GroupNorm)
@@ -120,9 +120,7 @@ class TestMobilenetV3(TestCase):
         self.assertEqual(feat[10].shape, torch.Size([1, 96, 7, 7]))
 
         # Test MobileNetv3 forward with big arch
-        model = MobileNetV3(
-            arch='big',
-            out_indices=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14))
+        model = MobileNetV3(arch="big", out_indices=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14))
         model.init_weights()
         model.train()
 
@@ -146,7 +144,7 @@ class TestMobilenetV3(TestCase):
         self.assertEqual(feat[14].shape, torch.Size([1, 160, 7, 7]))
 
         # Test MobileNetv3 forward with big arch
-        model = MobileNetV3(arch='big', out_indices=(0, ))
+        model = MobileNetV3(arch="big", out_indices=(0,))
         model.init_weights()
         model.train()
 

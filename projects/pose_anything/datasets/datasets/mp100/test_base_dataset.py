@@ -6,9 +6,7 @@ import numpy as np
 from mmcv.parallel import DataContainer as DC
 from torch.utils.data import Dataset
 
-from mmpose.core.evaluation.top_down_eval import (keypoint_auc, keypoint_epe,
-                                                  keypoint_nme,
-                                                  keypoint_pck_accuracy)
+from mmpose.core.evaluation.top_down_eval import keypoint_auc, keypoint_epe, keypoint_nme, keypoint_pck_accuracy
 from mmpose.datasets import DATASETS
 from mmpose.datasets.pipelines import Compose
 
@@ -16,33 +14,29 @@ from mmpose.datasets.pipelines import Compose
 @DATASETS.register_module()
 class TestBaseDataset(Dataset, metaclass=ABCMeta):
 
-    def __init__(self,
-                 ann_file,
-                 img_prefix,
-                 data_cfg,
-                 pipeline,
-                 test_mode=True,
-                 PCK_threshold_list=[0.05, 0.1, 0.15, 0.2, 0.25]):
+    def __init__(
+        self, ann_file, img_prefix, data_cfg, pipeline, test_mode=True, PCK_threshold_list=[0.05, 0.1, 0.15, 0.2, 0.25]
+    ):
         self.image_info = {}
         self.ann_info = {}
 
         self.annotations_path = ann_file
-        if not img_prefix.endswith('/'):
-            img_prefix = img_prefix + '/'
+        if not img_prefix.endswith("/"):
+            img_prefix = img_prefix + "/"
         self.img_prefix = img_prefix
         self.pipeline = pipeline
         self.test_mode = test_mode
         self.PCK_threshold_list = PCK_threshold_list
 
-        self.ann_info['image_size'] = np.array(data_cfg['image_size'])
-        self.ann_info['heatmap_size'] = np.array(data_cfg['heatmap_size'])
-        self.ann_info['num_joints'] = data_cfg['num_joints']
+        self.ann_info["image_size"] = np.array(data_cfg["image_size"])
+        self.ann_info["heatmap_size"] = np.array(data_cfg["heatmap_size"])
+        self.ann_info["num_joints"] = data_cfg["num_joints"]
 
-        self.ann_info['flip_pairs'] = None
+        self.ann_info["flip_pairs"] = None
 
-        self.ann_info['inference_channel'] = data_cfg['inference_channel']
-        self.ann_info['num_output_channels'] = data_cfg['num_output_channels']
-        self.ann_info['dataset_channel'] = data_cfg['dataset_channel']
+        self.ann_info["inference_channel"] = data_cfg["inference_channel"]
+        self.ann_info["num_output_channels"] = data_cfg["num_output_channels"]
+        self.ann_info["dataset_channel"] = data_cfg["dataset_channel"]
 
         self.db = []
         self.num_shots = 1
@@ -68,7 +62,7 @@ class TestBaseDataset(Dataset, metaclass=ABCMeta):
     def _write_keypoint_results(keypoints, res_file):
         """Write results into a json file."""
 
-        with open(res_file, 'w') as f:
+        with open(res_file, "w") as f:
             json.dump(keypoints, f, sort_keys=True, indent=4)
 
     def _report_metric(self, res_file, metrics):
@@ -87,7 +81,7 @@ class TestBaseDataset(Dataset, metaclass=ABCMeta):
         """
         info_str = []
 
-        with open(res_file, 'r') as fin:
+        with open(res_file, "r") as fin:
             preds = json.load(fin)
         assert len(preds) == len(self.paired_samples)
 
@@ -99,77 +93,72 @@ class TestBaseDataset(Dataset, metaclass=ABCMeta):
 
         for pred, pair in zip(preds, self.paired_samples):
             item = self.db[pair[-1]]
-            outputs.append(np.array(pred['keypoints'])[:, :-1])
-            gts.append(np.array(item['joints_3d'])[:, :-1])
+            outputs.append(np.array(pred["keypoints"])[:, :-1])
+            gts.append(np.array(item["joints_3d"])[:, :-1])
 
-            mask_query = ((np.array(item['joints_3d_visible'])[:, 0]) > 0)
-            mask_sample = ((np.array(
-                self.db[pair[0]]['joints_3d_visible'])[:, 0]) > 0)
+            mask_query = (np.array(item["joints_3d_visible"])[:, 0]) > 0
+            mask_sample = (np.array(self.db[pair[0]]["joints_3d_visible"])[:, 0]) > 0
             for id_s in pair[:-1]:
-                mask_sample = np.bitwise_and(
-                    mask_sample,
-                    ((np.array(self.db[id_s]['joints_3d_visible'])[:, 0]) > 0))
+                mask_sample = np.bitwise_and(mask_sample, ((np.array(self.db[id_s]["joints_3d_visible"])[:, 0]) > 0))
             masks.append(np.bitwise_and(mask_query, mask_sample))
 
-            if 'PCK' in metrics or 'NME' in metrics or 'AUC' in metrics:
-                bbox = np.array(item['bbox'])
+            if "PCK" in metrics or "NME" in metrics or "AUC" in metrics:
+                bbox = np.array(item["bbox"])
                 bbox_thr = np.max(bbox[2:])
                 threshold_bbox.append(np.array([bbox_thr, bbox_thr]))
-            if 'PCKh' in metrics:
-                head_box_thr = item['head_size']
-                threshold_head_box.append(
-                    np.array([head_box_thr, head_box_thr]))
+            if "PCKh" in metrics:
+                head_box_thr = item["head_size"]
+                threshold_head_box.append(np.array([head_box_thr, head_box_thr]))
 
-        if 'PCK' in metrics:
+        if "PCK" in metrics:
             pck_results = dict()
             for pck_thr in self.PCK_threshold_list:
                 pck_results[pck_thr] = []
 
-            for (output, gt, mask, thr_bbox) in zip(outputs, gts, masks,
-                                                    threshold_bbox):
+            for output, gt, mask, thr_bbox in zip(outputs, gts, masks, threshold_bbox):
                 for pck_thr in self.PCK_threshold_list:
                     _, pck, _ = keypoint_pck_accuracy(
-                        np.expand_dims(output, 0), np.expand_dims(gt, 0),
-                        np.expand_dims(mask, 0), pck_thr,
-                        np.expand_dims(thr_bbox, 0))
+                        np.expand_dims(output, 0),
+                        np.expand_dims(gt, 0),
+                        np.expand_dims(mask, 0),
+                        pck_thr,
+                        np.expand_dims(thr_bbox, 0),
+                    )
                     pck_results[pck_thr].append(pck)
 
             mPCK = 0
             for pck_thr in self.PCK_threshold_list:
-                info_str.append(
-                    ['PCK@' + str(pck_thr),
-                     np.mean(pck_results[pck_thr])])
+                info_str.append(["PCK@" + str(pck_thr), np.mean(pck_results[pck_thr])])
                 mPCK += np.mean(pck_results[pck_thr])
-            info_str.append(['mPCK', mPCK / len(self.PCK_threshold_list)])
+            info_str.append(["mPCK", mPCK / len(self.PCK_threshold_list)])
 
-        if 'NME' in metrics:
+        if "NME" in metrics:
             nme_results = []
-            for (output, gt, mask, thr_bbox) in zip(outputs, gts, masks,
-                                                    threshold_bbox):
+            for output, gt, mask, thr_bbox in zip(outputs, gts, masks, threshold_bbox):
                 nme = keypoint_nme(
-                    np.expand_dims(output, 0), np.expand_dims(gt, 0),
-                    np.expand_dims(mask, 0), np.expand_dims(thr_bbox, 0))
+                    np.expand_dims(output, 0),
+                    np.expand_dims(gt, 0),
+                    np.expand_dims(mask, 0),
+                    np.expand_dims(thr_bbox, 0),
+                )
                 nme_results.append(nme)
-            info_str.append(['NME', np.mean(nme_results)])
+            info_str.append(["NME", np.mean(nme_results)])
 
-        if 'AUC' in metrics:
+        if "AUC" in metrics:
             auc_results = []
-            for (output, gt, mask, thr_bbox) in zip(outputs, gts, masks,
-                                                    threshold_bbox):
+            for output, gt, mask, thr_bbox in zip(outputs, gts, masks, threshold_bbox):
                 auc = keypoint_auc(
-                    np.expand_dims(output, 0), np.expand_dims(gt, 0),
-                    np.expand_dims(mask, 0), thr_bbox[0])
+                    np.expand_dims(output, 0), np.expand_dims(gt, 0), np.expand_dims(mask, 0), thr_bbox[0]
+                )
                 auc_results.append(auc)
-            info_str.append(['AUC', np.mean(auc_results)])
+            info_str.append(["AUC", np.mean(auc_results)])
 
-        if 'EPE' in metrics:
+        if "EPE" in metrics:
             epe_results = []
-            for (output, gt, mask) in zip(outputs, gts, masks):
-                epe = keypoint_epe(
-                    np.expand_dims(output, 0), np.expand_dims(gt, 0),
-                    np.expand_dims(mask, 0))
+            for output, gt, mask in zip(outputs, gts, masks):
+                epe = keypoint_epe(np.expand_dims(output, 0), np.expand_dims(gt, 0), np.expand_dims(mask, 0))
                 epe_results.append(epe)
-            info_str.append(['EPE', np.mean(epe_results)])
+            info_str.append(["EPE", np.mean(epe_results)])
         return info_str
 
     def _merge_obj(self, Xs_list, Xq, idx):
@@ -181,25 +170,23 @@ class TestBaseDataset(Dataset, metaclass=ABCMeta):
         :return: Xall
         """
         Xall = dict()
-        Xall['img_s'] = [Xs['img'] for Xs in Xs_list]
-        Xall['target_s'] = [Xs['target'] for Xs in Xs_list]
-        Xall['target_weight_s'] = [Xs['target_weight'] for Xs in Xs_list]
-        xs_img_metas = [Xs['img_metas'].data for Xs in Xs_list]
+        Xall["img_s"] = [Xs["img"] for Xs in Xs_list]
+        Xall["target_s"] = [Xs["target"] for Xs in Xs_list]
+        Xall["target_weight_s"] = [Xs["target_weight"] for Xs in Xs_list]
+        xs_img_metas = [Xs["img_metas"].data for Xs in Xs_list]
 
-        Xall['img_q'] = Xq['img']
-        Xall['target_q'] = Xq['target']
-        Xall['target_weight_q'] = Xq['target_weight']
-        xq_img_metas = Xq['img_metas'].data
+        Xall["img_q"] = Xq["img"]
+        Xall["target_q"] = Xq["target"]
+        Xall["target_weight_q"] = Xq["target_weight"]
+        xq_img_metas = Xq["img_metas"].data
 
         img_metas = dict()
         for key in xq_img_metas.keys():
-            img_metas['sample_' + key] = [
-                xs_img_meta[key] for xs_img_meta in xs_img_metas
-            ]
-            img_metas['query_' + key] = xq_img_metas[key]
-        img_metas['bbox_id'] = idx
+            img_metas["sample_" + key] = [xs_img_meta[key] for xs_img_meta in xs_img_metas]
+            img_metas["query_" + key] = xq_img_metas[key]
+        img_metas["bbox_id"] = idx
 
-        Xall['img_metas'] = DC(img_metas, cpu_only=True)
+        Xall["img_metas"] = DC(img_metas, cpu_only=True)
 
         return Xall
 
@@ -212,32 +199,30 @@ class TestBaseDataset(Dataset, metaclass=ABCMeta):
 
         pair_ids = self.paired_samples[idx]  # [supported id * shots, query id]
         assert len(pair_ids) == self.num_shots + 1
-        sample_id_list = pair_ids[:self.num_shots]
+        sample_id_list = pair_ids[: self.num_shots]
         query_id = pair_ids[-1]
 
         sample_obj_list = []
         for sample_id in sample_id_list:
             sample_obj = copy.deepcopy(self.db[sample_id])
-            sample_obj['ann_info'] = copy.deepcopy(self.ann_info)
+            sample_obj["ann_info"] = copy.deepcopy(self.ann_info)
             sample_obj_list.append(sample_obj)
 
         query_obj = copy.deepcopy(self.db[query_id])
-        query_obj['ann_info'] = copy.deepcopy(self.ann_info)
+        query_obj["ann_info"] = copy.deepcopy(self.ann_info)
 
         Xs_list = []
         for sample_obj in sample_obj_list:
-            Xs = self.pipeline(
-                sample_obj
-            )  # dict with ['img', 'target', 'target_weight', 'img_metas'],
+            Xs = self.pipeline(sample_obj)  # dict with ['img', 'target', 'target_weight', 'img_metas'],
             Xs_list.append(Xs)  # Xs['target'] is of shape [100, map_h, map_w]
         Xq = self.pipeline(query_obj)
 
         Xall = self._merge_obj(Xs_list, Xq, idx)
-        Xall['skeleton'] = self.db[query_id]['skeleton']
+        Xall["skeleton"] = self.db[query_id]["skeleton"]
 
         return Xall
 
-    def _sort_and_unique_bboxes(self, kpts, key='bbox_id'):
+    def _sort_and_unique_bboxes(self, kpts, key="bbox_id"):
         """sort kpts and remove the repeated ones."""
         kpts = sorted(kpts, key=lambda x: x[key])
         num = len(kpts)

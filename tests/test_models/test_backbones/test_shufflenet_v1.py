@@ -14,7 +14,7 @@ class TestShufflenetV1(TestCase):
     @staticmethod
     def is_block(modules):
         """Check if is ResNet building block."""
-        if isinstance(modules, (ShuffleUnit, )):
+        if isinstance(modules, (ShuffleUnit,)):
             return True
         return False
 
@@ -38,28 +38,26 @@ class TestShufflenetV1(TestCase):
 
         with self.assertRaises(ValueError):
             # combine must be in ['add', 'concat']
-            ShuffleUnit(24, 16, groups=3, first_block=True, combine='test')
+            ShuffleUnit(24, 16, groups=3, first_block=True, combine="test")
 
         with self.assertRaises(AssertionError):
             # inplanes must be equal tp = outplanes when combine='add'
-            ShuffleUnit(64, 24, groups=4, first_block=True, combine='add')
+            ShuffleUnit(64, 24, groups=4, first_block=True, combine="add")
 
         # Test ShuffleUnit with combine='add'
-        block = ShuffleUnit(24, 24, groups=3, first_block=True, combine='add')
+        block = ShuffleUnit(24, 24, groups=3, first_block=True, combine="add")
         x = torch.randn(1, 24, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, torch.Size((1, 24, 56, 56)))
 
         # Test ShuffleUnit with combine='concat'
-        block = ShuffleUnit(
-            24, 240, groups=3, first_block=True, combine='concat')
+        block = ShuffleUnit(24, 240, groups=3, first_block=True, combine="concat")
         x = torch.randn(1, 24, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, torch.Size((1, 240, 28, 28)))
 
         # Test ShuffleUnit with checkpoint forward
-        block = ShuffleUnit(
-            24, 24, groups=3, first_block=True, combine='add', with_cp=True)
+        block = ShuffleUnit(24, 24, groups=3, first_block=True, combine="add", with_cp=True)
         self.assertTrue(block.with_cp)
         x = torch.randn(1, 24, 56, 56)
         x.requires_grad = True
@@ -88,8 +86,7 @@ class TestShufflenetV1(TestCase):
 
         # Test ShuffleNetV1 with first stage frozen
         frozen_stages = 1
-        model = ShuffleNetV1(
-            frozen_stages=frozen_stages, out_indices=(0, 1, 2))
+        model = ShuffleNetV1(frozen_stages=frozen_stages, out_indices=(0, 1, 2))
         model.init_weights()
         model.train()
         for param in model.conv1.parameters():
@@ -184,9 +181,8 @@ class TestShufflenetV1(TestCase):
 
         # Test ShuffleNetV1 forward with GroupNorm forward
         model = ShuffleNetV1(
-            groups=3,
-            norm_cfg=dict(type='GN', num_groups=2, requires_grad=True),
-            out_indices=(0, 1, 2))
+            groups=3, norm_cfg=dict(type="GN", num_groups=2, requires_grad=True), out_indices=(0, 1, 2)
+        )
         model.init_weights()
         model.train()
 
@@ -217,7 +213,7 @@ class TestShufflenetV1(TestCase):
         self.assertEqual(feat[1].shape, torch.Size((1, 960, 7, 7)))
 
         # Test ShuffleNetV1 forward with layers 2 forward
-        model = ShuffleNetV1(groups=3, out_indices=(2, ))
+        model = ShuffleNetV1(groups=3, out_indices=(2,))
         model.init_weights()
         model.train()
 

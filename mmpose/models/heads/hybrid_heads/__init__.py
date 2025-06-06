@@ -6,5 +6,14 @@ from .rtmo_head import RTMOHead
 from .vis_head import VisPredictHead
 from .yoloxpose_head import YOLOXPoseHead
 
-__all__ = ['DEKRHead', 'VisPredictHead', 'YOLOXPoseHead', 'RTMOHead', 'ProbMapHead', 'DoubleHead', 'PoseIDHead',
-           'DoubleProbMapHead', 'IterativeHead']
+__all__ = [
+    "DEKRHead",
+    "VisPredictHead",
+    "YOLOXPoseHead",
+    "RTMOHead",
+    "ProbMapHead",
+    "DoubleHead",
+    "PoseIDHead",
+    "DoubleProbMapHead",
+    "IterativeHead",
+]

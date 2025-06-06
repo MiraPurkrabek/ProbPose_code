@@ -7,15 +7,21 @@ import numpy as np
 
 from mmpose.registry import KEYPOINT_CODECS
 from .base import BaseKeypointCodec
-from .utils import (gaussian_blur, generate_offset_heatmap, generate_probmaps,
-                    generate_udp_gaussian_heatmaps, get_heatmap_expected_value,
-                    get_heatmap_maximum, refine_keypoints_dark_udp)
+from .utils import (
+    gaussian_blur,
+    generate_offset_heatmap,
+    generate_probmaps,
+    generate_udp_gaussian_heatmaps,
+    get_heatmap_expected_value,
+    get_heatmap_maximum,
+    refine_keypoints_dark_udp,
+)
 
 
 @KEYPOINT_CODECS.register_module()
 class ArgMaxProbMap(BaseKeypointCodec):
     r"""Generate per-pixel expected OKS heatmaps for keypoint detection with ArgMax decoding.
-    See the paper: `ProbPose: A Probabilistic Approach to 2D Human Pose Estimation` 
+    See the paper: `ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`
     by Purkrabek et al. (2025) for details.
 
     Note:
@@ -54,44 +60,51 @@ class ArgMaxProbMap(BaseKeypointCodec):
         blur_kernel_size (int): The Gaussian blur kernel size of the heatmap
             modulation in DarkPose. Defaults to 11
 
-    .. _`ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`: 
+    .. _`ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`:
         https://arxiv.org/abs/2412.02254
     """
 
-    label_mapping_table = dict(keypoint_weights='keypoint_weights', )
-    field_mapping_table = dict(heatmaps='heatmaps', )
+    label_mapping_table = dict(
+        keypoint_weights="keypoint_weights",
+    )
+    field_mapping_table = dict(
+        heatmaps="heatmaps",
+    )
 
-    def __init__(self,
-                 input_size: Tuple[int, int],
-                 heatmap_size: Tuple[int, int],
-                 heatmap_type: str = 'gaussian',
-                 sigma: float = -1,
-                 radius_factor: float = 0.0546875,
-                 blur_kernel_size: int = 11,
-                 increase_sigma_with_padding=False,
-                 ) -> None:
+    def __init__(
+        self,
+        input_size: Tuple[int, int],
+        heatmap_size: Tuple[int, int],
+        heatmap_type: str = "gaussian",
+        sigma: float = -1,
+        radius_factor: float = 0.0546875,
+        blur_kernel_size: int = 11,
+        increase_sigma_with_padding=False,
+    ) -> None:
         super().__init__()
         self.input_size = input_size
         self.heatmap_size = heatmap_size
         self.radius_factor = radius_factor
         self.heatmap_type = heatmap_type
         self.blur_kernel_size = blur_kernel_size
-        self.scale_factor = ((np.array(input_size) - 1) /
-                             (np.array(heatmap_size) - 1)).astype(np.float32)
+        self.scale_factor = ((np.array(input_size) - 1) / (np.array(heatmap_size) - 1)).astype(np.float32)
         self.increase_sigma_with_padding = increase_sigma_with_padding
         self.sigma = sigma
 
-        if self.heatmap_type not in {'gaussian', 'combined'}:
+        if self.heatmap_type not in {"gaussian", "combined"}:
             raise ValueError(
-                f'{self.__class__.__name__} got invalid `heatmap_type` value'
-                f'{self.heatmap_type}. Should be one of '
-                '{"gaussian", "combined"}')
+                f"{self.__class__.__name__} got invalid `heatmap_type` value"
+                f"{self.heatmap_type}. Should be one of "
+                '{"gaussian", "combined"}'
+            )
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None,
-               id_similarity: Optional[float] = 0.0,
-               keypoints_visibility: Optional[np.ndarray] = None) -> dict:
+    def encode(
+        self,
+        keypoints: np.ndarray,
+        keypoints_visible: Optional[np.ndarray] = None,
+        id_similarity: Optional[float] = 0.0,
+        keypoints_visibility: Optional[np.ndarray] = None,
+    ) -> dict:
         """Encode keypoints into heatmaps. Note that the original keypoint
         coordinates should be in the input image space.
 
@@ -115,17 +128,14 @@ class ArgMaxProbMap(BaseKeypointCodec):
             - keypoint_weights (np.ndarray): The target weights in shape
                 (K,)
         """
-        assert keypoints.shape[0] == 1, (
-            f'{self.__class__.__name__} only support single-instance '
-            'keypoint encoding')
-        
+        assert keypoints.shape[0] == 1, f"{self.__class__.__name__} only support single-instance " "keypoint encoding"
+
         if keypoints_visibility is None:
             keypoints_visibility = np.zeros(keypoints.shape[:2], dtype=np.float32)
 
         if keypoints_visible is None:
             keypoints_visible = np.ones(keypoints.shape[:2], dtype=np.float32)
 
-        
         heatmaps, keypoint_weights = generate_probmaps(
             heatmap_size=self.heatmap_size,
             keypoints=keypoints / self.scale_factor,
@@ -134,7 +144,7 @@ class ArgMaxProbMap(BaseKeypointCodec):
         )
 
         annotated = keypoints_visible > 0
-        
+
         in_image = np.logical_and(
             keypoints[:, :, 0] >= 0,
             keypoints[:, :, 0] < self.input_size[0],
@@ -147,7 +157,7 @@ class ArgMaxProbMap(BaseKeypointCodec):
             in_image,
             keypoints[:, :, 1] < self.input_size[1],
         )
-        
+
         encoded = dict(
             heatmaps=heatmaps,
             keypoint_weights=keypoint_weights,
@@ -176,7 +186,7 @@ class ArgMaxProbMap(BaseKeypointCodec):
         heatmaps = encoded.copy()
         W, H = self.heatmap_size
 
-        if self.heatmap_type == 'gaussian':
+        if self.heatmap_type == "gaussian":
 
             keypoints_max, scores = get_heatmap_maximum(heatmaps)
             # unsqueeze the instance dimension for single-instance results
@@ -184,7 +194,8 @@ class ArgMaxProbMap(BaseKeypointCodec):
             scores = scores[None]
 
             keypoints = refine_keypoints_dark_udp(
-                keypoints_max.copy(), heatmaps, blur_kernel_size=self.blur_kernel_size)
+                keypoints_max.copy(), heatmaps, blur_kernel_size=self.blur_kernel_size
+            )
 
             # This piece of code is used to draw the comparison between the
             # UDP end expected-OKS decoding in the paper. It is not used in the
@@ -203,7 +214,7 @@ class ArgMaxProbMap(BaseKeypointCodec):
 
                     # 1/4 of heatmap pixel is 1 pixel in image space
                     if 0.5 < d:
-                        
+
                         # Skip 80% of the heatmaps to save time and space
                         if np.random.rand() < 0.8:
                             continue
@@ -242,21 +253,23 @@ class ArgMaxProbMap(BaseKeypointCodec):
 
                         htm_raw = htm.copy()
 
-                        
                         htm_center = np.array(size) // 2
                         htm = cv2.arrowedLine(htm, htm_center, kpt, (191, 64, 191), thickness=1, tipLength=0.05)
-                        htm_exp = cv2.arrowedLine(htm_exp, htm_center, kpt_exp, (191, 64, 191), thickness=1, tipLength=0.05)
-                        htm_max = cv2.arrowedLine(htm_max, htm_center, kpt_max, (191, 64, 191), thickness=1, tipLength=0.05)
-                        
+                        htm_exp = cv2.arrowedLine(
+                            htm_exp, htm_center, kpt_exp, (191, 64, 191), thickness=1, tipLength=0.05
+                        )
+                        htm_max = cv2.arrowedLine(
+                            htm_max, htm_center, kpt_max, (191, 64, 191), thickness=1, tipLength=0.05
+                        )
+
                         white_column = np.ones((size[1], 3, 3), dtype=np.uint8) * 150
                         save_img = np.hstack((htm_max, white_column, htm, white_column, htm_exp))
-                        
+
                         oksm = oks_maps[k, :, :]
                         oksm = cv2.resize(oksm, (size[0], size[1]))
                         oksm /= oksm.max()
                         oksm = cv2.cvtColor(oksm, cv2.COLOR_GRAY2BGR)
                         oksm = cv2.applyColorMap((oksm * 255).astype(np.uint8), cv2.COLORMAP_JET)
-                        
 
                         raw_htm = encoded[k, :, :].copy().reshape(1, H, W)
                         blur_htm = gaussian_blur(raw_htm.copy(), self.blur_kernel_size).squeeze()
@@ -269,29 +282,37 @@ class ArgMaxProbMap(BaseKeypointCodec):
                         raw_htm /= raw_htm.max()
                         raw_htm = cv2.cvtColor(raw_htm, cv2.COLOR_GRAY2BGR)
                         raw_htm = cv2.applyColorMap((raw_htm * 255).astype(np.uint8), cv2.COLORMAP_JET)
-                        
+
                         oksm_merge = oksm.copy()
                         oksm_merge = cv2.drawMarker(oksm_merge, kpt_exp, (191, 64, 191), cv2.MARKER_CROSS, 10, 2)
-                        
+
                         htm_merge = blur_htm.copy()
                         htm_merge = cv2.drawMarker(htm_merge, kpt, (255, 159, 207), cv2.MARKER_CROSS, 10, 2)
                         htm_merge = cv2.drawMarker(htm_merge, kpt_max, (255, 255, 255), cv2.MARKER_CROSS, 10, 2)
-                        
+
                         save_heatmaps = np.hstack((raw_htm, white_column, blur_htm, white_column, oksm))
                         white_row = np.ones((3, save_img.shape[1], 3), dtype=np.uint8) * 150
                         save_img = np.vstack((save_img, white_row, save_heatmaps))
-                        
-                        os.makedirs('debug', exist_ok=True)
-                        save_path = "debug/{:04.1f}_{:d}_{:06d}.png".format(d, k, abs(hash(str(keypoints[0, k, :])) % (10 ** 6)))
+
+                        os.makedirs("debug", exist_ok=True)
+                        save_path = "debug/{:04.1f}_{:d}_{:06d}.png".format(
+                            d, k, abs(hash(str(keypoints[0, k, :])) % (10**6))
+                        )
                         cv2.imwrite(save_path, save_img)
-                        save_path = "debug/{:04.1f}_{:d}_{:06d}_merge.png".format(d, k, abs(hash(str(keypoints[0, k, :])) % (10 ** 6)))
+                        save_path = "debug/{:04.1f}_{:d}_{:06d}_merge.png".format(
+                            d, k, abs(hash(str(keypoints[0, k, :])) % (10**6))
+                        )
                         cv2.imwrite(save_path, np.hstack((htm_merge, white_column, oksm_merge)))
-                        save_path = "debug/{:04.1f}_{:d}_{:06d}_blur.png".format(d, k, abs(hash(str(keypoints[0, k, :])) % (10 ** 6)))
+                        save_path = "debug/{:04.1f}_{:d}_{:06d}_blur.png".format(
+                            d, k, abs(hash(str(keypoints[0, k, :])) % (10**6))
+                        )
                         cv2.imwrite(save_path, htm_merge)
-                        save_path = "debug/{:04.1f}_{:d}_{:06d}_oks.png".format(d, k, abs(hash(str(keypoints[0, k, :])) % (10 ** 6)))
+                        save_path = "debug/{:04.1f}_{:d}_{:06d}_oks.png".format(
+                            d, k, abs(hash(str(keypoints[0, k, :])) % (10**6))
+                        )
                         cv2.imwrite(save_path, oksm_merge)
 
-        elif self.heatmap_type == 'combined':
+        elif self.heatmap_type == "combined":
             _K, H, W = heatmaps.shape
             K = _K // 3
 

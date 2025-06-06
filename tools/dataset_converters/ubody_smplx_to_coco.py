@@ -18,27 +18,23 @@ class SMPLX(object):
     def __init__(self, human_model_path):
         self.human_model_path = human_model_path
         self.layer_args = {
-            'create_global_orient': False,
-            'create_body_pose': False,
-            'create_left_hand_pose': False,
-            'create_right_hand_pose': False,
-            'create_jaw_pose': False,
-            'create_leye_pose': False,
-            'create_reye_pose': False,
-            'create_betas': False,
-            'create_expression': False,
-            'create_transl': False,
+            "create_global_orient": False,
+            "create_body_pose": False,
+            "create_left_hand_pose": False,
+            "create_right_hand_pose": False,
+            "create_jaw_pose": False,
+            "create_leye_pose": False,
+            "create_reye_pose": False,
+            "create_betas": False,
+            "create_expression": False,
+            "create_transl": False,
         }
 
         self.neutral_model = smplx.create(
-            self.human_model_path,
-            'smplx',
-            gender='NEUTRAL',
-            use_pca=False,
-            use_face_contour=True,
-            **self.layer_args)
+            self.human_model_path, "smplx", gender="NEUTRAL", use_pca=False, use_face_contour=True, **self.layer_args
+        )
         if torch.cuda.is_available():
-            self.neutral_model = self.neutral_model.to('cuda:0')
+            self.neutral_model = self.neutral_model.to("cuda:0")
 
         self.vertex_num = 10475
         self.face = self.neutral_model.faces
@@ -75,30 +71,16 @@ class SMPLX(object):
             (34, 49), (35, 50), (36, 51),
         )
         # yapf: enable
-        self.orig_root_joint_idx = self.orig_joints_name.index('Pelvis')
+        self.orig_root_joint_idx = self.orig_joints_name.index("Pelvis")
         self.orig_joint_part = {
-            'body':
-            range(
-                self.orig_joints_name.index('Pelvis'),
-                self.orig_joints_name.index('R_Wrist') + 1),
-            'lhand':
-            range(
-                self.orig_joints_name.index('L_Index_1'),
-                self.orig_joints_name.index('L_Thumb_3') + 1),
-            'rhand':
-            range(
-                self.orig_joints_name.index('R_Index_1'),
-                self.orig_joints_name.index('R_Thumb_3') + 1),
-            'face':
-            range(
-                self.orig_joints_name.index('Jaw'),
-                self.orig_joints_name.index('Jaw') + 1)
+            "body": range(self.orig_joints_name.index("Pelvis"), self.orig_joints_name.index("R_Wrist") + 1),
+            "lhand": range(self.orig_joints_name.index("L_Index_1"), self.orig_joints_name.index("L_Thumb_3") + 1),
+            "rhand": range(self.orig_joints_name.index("R_Index_1"), self.orig_joints_name.index("R_Thumb_3") + 1),
+            "face": range(self.orig_joints_name.index("Jaw"), self.orig_joints_name.index("Jaw") + 1),
         }
 
         # changed SMPLX joint set for the supervision
-        self.joint_num = (
-            137  # 25 (body joints) + 40 (hand joints) + 72 (face keypoints)
-        )
+        self.joint_num = 137  # 25 (body joints) + 40 (hand joints) + 72 (face keypoints)
         # yapf: disable
         self.joints_name = (
             # 25 body joints
@@ -177,31 +159,16 @@ class SMPLX(object):
         # yapf: enable
 
         self.joint_part = {
-            'body':
-            range(
-                self.joints_name.index('Pelvis'),
-                self.joints_name.index('Nose') + 1),
-            'lhand':
-            range(
-                self.joints_name.index('L_Thumb_1'),
-                self.joints_name.index('L_Pinky_4') + 1),
-            'rhand':
-            range(
-                self.joints_name.index('R_Thumb_1'),
-                self.joints_name.index('R_Pinky_4') + 1),
-            'hand':
-            range(
-                self.joints_name.index('L_Thumb_1'),
-                self.joints_name.index('R_Pinky_4') + 1),
-            'face':
-            range(
-                self.joints_name.index('Face_1'),
-                self.joints_name.index('Face_72') + 1)
+            "body": range(self.joints_name.index("Pelvis"), self.joints_name.index("Nose") + 1),
+            "lhand": range(self.joints_name.index("L_Thumb_1"), self.joints_name.index("L_Pinky_4") + 1),
+            "rhand": range(self.joints_name.index("R_Thumb_1"), self.joints_name.index("R_Pinky_4") + 1),
+            "hand": range(self.joints_name.index("L_Thumb_1"), self.joints_name.index("R_Pinky_4") + 1),
+            "face": range(self.joints_name.index("Face_1"), self.joints_name.index("Face_72") + 1),
         }
 
 
 def read_annotation_file(annotation_file: str) -> List[Dict]:
-    with open(annotation_file, 'r') as f:
+    with open(annotation_file, "r") as f:
         annotations = json.load(f)
     return annotations
 
@@ -213,12 +180,9 @@ def cam2pixel(cam_coord, f, c):
     return np.stack((x, y, z), 1)
 
 
-def process_scene_anno(scene: str, annotation_root: str, splits: np.array,
-                       human_model_path: str):
-    annos = read_annotation_file(
-        osp.join(annotation_root, scene, 'smplx_annotation.json'))
-    keypoint_annos = COCO(
-        osp.join(annotation_root, scene, 'keypoint_annotation.json'))
+def process_scene_anno(scene: str, annotation_root: str, splits: np.array, human_model_path: str):
+    annos = read_annotation_file(osp.join(annotation_root, scene, "smplx_annotation.json"))
+    keypoint_annos = COCO(osp.join(annotation_root, scene, "keypoint_annotation.json"))
     human_model = SMPLX(human_model_path)
 
     train_annos = []
@@ -229,18 +193,17 @@ def process_scene_anno(scene: str, annotation_root: str, splits: np.array,
     progress_bar = mmengine.ProgressBar(len(keypoint_annos.anns.keys()))
     for aid in keypoint_annos.anns.keys():
         ann = keypoint_annos.anns[aid]
-        img = keypoint_annos.loadImgs(ann['image_id'])[0]
-        if img['file_name'].startswith('/'):
-            file_name = img['file_name'][1:]
+        img = keypoint_annos.loadImgs(ann["image_id"])[0]
+        if img["file_name"].startswith("/"):
+            file_name = img["file_name"][1:]
         else:
-            file_name = img['file_name']
+            file_name = img["file_name"]
 
-        video_name = file_name.split('/')[-2]
-        if 'Trim' in video_name:
-            video_name = video_name.split('_Trim')[0]
+        video_name = file_name.split("/")[-2]
+        if "Trim" in video_name:
+            video_name = video_name.split("_Trim")[0]
 
-        img_path = os.path.join(
-            annotation_root.replace('annotations', 'images'), scene, file_name)
+        img_path = os.path.join(annotation_root.replace("annotations", "images"), scene, file_name)
         if not os.path.exists(img_path):
             progress_bar.update()
             continue
@@ -249,56 +212,50 @@ def process_scene_anno(scene: str, annotation_root: str, splits: np.array,
             continue
 
         smplx_param = annos[str(aid)]
-        human_model_param = smplx_param['smplx_param']
-        cam_param = smplx_param['cam_param']
-        if 'lhand_valid' not in human_model_param:
-            human_model_param['lhand_valid'] = ann['lefthand_valid']
-            human_model_param['rhand_valid'] = ann['righthand_valid']
-            human_model_param['face_valid'] = ann['face_valid']
+        human_model_param = smplx_param["smplx_param"]
+        cam_param = smplx_param["cam_param"]
+        if "lhand_valid" not in human_model_param:
+            human_model_param["lhand_valid"] = ann["lefthand_valid"]
+            human_model_param["rhand_valid"] = ann["righthand_valid"]
+            human_model_param["face_valid"] = ann["face_valid"]
 
-        rotation_valid = np.ones((human_model.orig_joint_num),
-                                 dtype=np.float32)
+        rotation_valid = np.ones((human_model.orig_joint_num), dtype=np.float32)
         coord_valid = np.ones((human_model.joint_num), dtype=np.float32)
 
-        root_pose = human_model_param['root_pose']
-        body_pose = human_model_param['body_pose']
-        shape = human_model_param['shape']
-        trans = human_model_param['trans']
+        root_pose = human_model_param["root_pose"]
+        body_pose = human_model_param["body_pose"]
+        shape = human_model_param["shape"]
+        trans = human_model_param["trans"]
 
-        if 'lhand_pose' in human_model_param and human_model_param.get(
-                'lhand_valid', False):
-            lhand_pose = human_model_param['lhand_pose']
+        if "lhand_pose" in human_model_param and human_model_param.get("lhand_valid", False):
+            lhand_pose = human_model_param["lhand_pose"]
         else:
-            lhand_pose = np.zeros(
-                (3 * len(human_model.orig_joint_part['lhand'])),
-                dtype=np.float32)
-            rotation_valid[human_model.orig_joint_part['lhand']] = 0
-            coord_valid[human_model.orig_joint_part['lhand']] = 0
+            lhand_pose = np.zeros((3 * len(human_model.orig_joint_part["lhand"])), dtype=np.float32)
+            rotation_valid[human_model.orig_joint_part["lhand"]] = 0
+            coord_valid[human_model.orig_joint_part["lhand"]] = 0
 
-        if 'rhand_pose' in human_model_param and human_model_param.get(
-                'rhand_valid', False):
-            rhand_pose = human_model_param['rhand_pose']
+        if "rhand_pose" in human_model_param and human_model_param.get("rhand_valid", False):
+            rhand_pose = human_model_param["rhand_pose"]
         else:
-            rhand_pose = np.zeros(
-                (3 * len(human_model.orig_joint_part['rhand'])),
-                dtype=np.float32)
-            rotation_valid[human_model.orig_joint_part['rhand']] = 0
-            coord_valid[human_model.orig_joint_part['rhand']] = 0
+            rhand_pose = np.zeros((3 * len(human_model.orig_joint_part["rhand"])), dtype=np.float32)
+            rotation_valid[human_model.orig_joint_part["rhand"]] = 0
+            coord_valid[human_model.orig_joint_part["rhand"]] = 0
 
-        if 'jaw_pose' in human_model_param and \
-            'expr' in human_model_param and \
-                human_model_param.get('face_valid', False):
-            jaw_pose = human_model_param['jaw_pose']
-            expr = human_model_param['expr']
+        if (
+            "jaw_pose" in human_model_param
+            and "expr" in human_model_param
+            and human_model_param.get("face_valid", False)
+        ):
+            jaw_pose = human_model_param["jaw_pose"]
+            expr = human_model_param["expr"]
         else:
             jaw_pose = np.zeros((3), dtype=np.float32)
             expr = np.zeros((human_model.expr_code_dim), dtype=np.float32)
-            rotation_valid[human_model.orig_joint_part['face']] = 0
-            coord_valid[human_model.orig_joint_part['face']] = 0
+            rotation_valid[human_model.orig_joint_part["face"]] = 0
+            coord_valid[human_model.orig_joint_part["face"]] = 0
 
         # init human model inputs
-        device = torch.device(
-            'cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
         root_pose = torch.FloatTensor(root_pose).to(device).view(1, 3)
         body_pose = torch.FloatTensor(body_pose).to(device).view(-1, 3)
         lhand_pose = torch.FloatTensor(lhand_pose).to(device).view(-1, 3)
@@ -320,50 +277,47 @@ def process_scene_anno(scene: str, annotation_root: str, splits: np.array,
                 jaw_pose=jaw_pose.view(1, -1),
                 leye_pose=zero_pose,
                 reye_pose=zero_pose,
-                expression=expr)
+                expression=expr,
+            )
 
         joint_cam = output.joints[0].cpu().numpy()[human_model.joint_idx, :]
-        joint_img = cam2pixel(joint_cam, cam_param['focal'],
-                              cam_param['princpt'])
+        joint_img = cam2pixel(joint_cam, cam_param["focal"], cam_param["princpt"])
 
-        joint_cam = (joint_cam - joint_cam[human_model.root_joint_idx, None, :]
-                     )  # root-relative
-        joint_cam[human_model.joint_part['lhand'], :] = (
-            joint_cam[human_model.joint_part['lhand'], :] -
-            joint_cam[human_model.lwrist_idx, None, :]
+        joint_cam = joint_cam - joint_cam[human_model.root_joint_idx, None, :]  # root-relative
+        joint_cam[human_model.joint_part["lhand"], :] = (
+            joint_cam[human_model.joint_part["lhand"], :] - joint_cam[human_model.lwrist_idx, None, :]
         )  # left hand root-relative
-        joint_cam[human_model.joint_part['rhand'], :] = (
-            joint_cam[human_model.joint_part['rhand'], :] -
-            joint_cam[human_model.rwrist_idx, None, :]
+        joint_cam[human_model.joint_part["rhand"], :] = (
+            joint_cam[human_model.joint_part["rhand"], :] - joint_cam[human_model.rwrist_idx, None, :]
         )  # right hand root-relative
-        joint_cam[human_model.joint_part['face'], :] = (
-            joint_cam[human_model.joint_part['face'], :] -
-            joint_cam[human_model.neck_idx, None, :])  # face root-relative
+        joint_cam[human_model.joint_part["face"], :] = (
+            joint_cam[human_model.joint_part["face"], :] - joint_cam[human_model.neck_idx, None, :]
+        )  # face root-relative
 
         body_3d_size = 2
         output_hm_shape = (16, 16, 12)
-        joint_img[human_model.joint_part['body'],
-                  2] = ((joint_cam[human_model.joint_part['body'], 2].copy() /
-                         (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0])
-        joint_img[human_model.joint_part['lhand'],
-                  2] = ((joint_cam[human_model.joint_part['lhand'], 2].copy() /
-                         (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0])
-        joint_img[human_model.joint_part['rhand'],
-                  2] = ((joint_cam[human_model.joint_part['rhand'], 2].copy() /
-                         (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0])
-        joint_img[human_model.joint_part['face'],
-                  2] = ((joint_cam[human_model.joint_part['face'], 2].copy() /
-                         (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0])
+        joint_img[human_model.joint_part["body"], 2] = (
+            (joint_cam[human_model.joint_part["body"], 2].copy() / (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0]
+        )
+        joint_img[human_model.joint_part["lhand"], 2] = (
+            (joint_cam[human_model.joint_part["lhand"], 2].copy() / (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0]
+        )
+        joint_img[human_model.joint_part["rhand"], 2] = (
+            (joint_cam[human_model.joint_part["rhand"], 2].copy() / (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0]
+        )
+        joint_img[human_model.joint_part["face"], 2] = (
+            (joint_cam[human_model.joint_part["face"], 2].copy() / (body_3d_size / 2) + 1) / 2.0 * output_hm_shape[0]
+        )
 
         keypoints_2d = joint_img[:, :2].copy()
         keypoints_3d = joint_img.copy()
         keypoints_valid = coord_valid.reshape((-1, 1))
 
-        ann['keypoints'] = keypoints_2d.tolist()
-        ann['keypoints_3d'] = keypoints_3d.tolist()
-        ann['keypoints_valid'] = keypoints_valid.tolist()
-        ann['camera_param'] = cam_param
-        img['file_name'] = os.path.join(scene, file_name)
+        ann["keypoints"] = keypoints_2d.tolist()
+        ann["keypoints_3d"] = keypoints_3d.tolist()
+        ann["keypoints_valid"] = keypoints_valid.tolist()
+        ann["camera_param"] = cam_param
+        img["file_name"] = os.path.join(scene, file_name)
         if video_name in splits:
             val_annos.append(ann)
             val_imgs.append(img)
@@ -372,42 +326,31 @@ def process_scene_anno(scene: str, annotation_root: str, splits: np.array,
             train_imgs.append(img)
         progress_bar.update()
 
-    categories = [{
-        'supercategory': 'person',
-        'id': 1,
-        'name': 'person',
-        'keypoints': human_model.joints_name,
-        'skeleton': human_model.flip_pairs
-    }]
-    train_data = {
-        'images': train_imgs,
-        'annotations': train_annos,
-        'categories': categories
-    }
-    val_data = {
-        'images': val_imgs,
-        'annotations': val_annos,
-        'categories': categories
-    }
+    categories = [
+        {
+            "supercategory": "person",
+            "id": 1,
+            "name": "person",
+            "keypoints": human_model.joints_name,
+            "skeleton": human_model.flip_pairs,
+        }
+    ]
+    train_data = {"images": train_imgs, "annotations": train_annos, "categories": categories}
+    val_data = {"images": val_imgs, "annotations": val_annos, "categories": categories}
 
-    mmengine.dump(
-        train_data,
-        osp.join(annotation_root, scene, 'train_3dkeypoint_annotation.json'))
-    mmengine.dump(
-        val_data,
-        osp.join(annotation_root, scene, 'val_3dkeypoint_annotation.json'))
+    mmengine.dump(train_data, osp.join(annotation_root, scene, "train_3dkeypoint_annotation.json"))
+    mmengine.dump(val_data, osp.join(annotation_root, scene, "val_3dkeypoint_annotation.json"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data-root', type=str, default='data/UBody')
-    parser.add_argument('--human-model-path', type=str, default='data/SMPLX')
-    parser.add_argument(
-        '--nproc', default=8, type=int, help='number of process')
+    parser.add_argument("--data-root", type=str, default="data/UBody")
+    parser.add_argument("--human-model-path", type=str, default="data/SMPLX")
+    parser.add_argument("--nproc", default=8, type=int, help="number of process")
     args = parser.parse_args()
 
-    split_path = f'{args.data_root}/splits/intra_scene_test_list.npy'
-    annotation_path = f'{args.data_root}/annotations'
+    split_path = f"{args.data_root}/splits/intra_scene_test_list.npy"
+    annotation_path = f"{args.data_root}/annotations"
 
     folders = os.listdir(annotation_path)
     folders = [f for f in folders if osp.isdir(osp.join(annotation_path, f))]
@@ -417,14 +360,15 @@ if __name__ == '__main__':
     if args.nproc > 1:
         mmengine.track_parallel_progress(
             partial(
-                process_scene_anno,
-                annotation_root=annotation_path,
-                splits=splits,
-                human_model_path=human_model_path), folders, args.nproc)
+                process_scene_anno, annotation_root=annotation_path, splits=splits, human_model_path=human_model_path
+            ),
+            folders,
+            args.nproc,
+        )
     else:
         mmengine.track_progress(
             partial(
-                process_scene_anno,
-                annotation_root=annotation_path,
-                splits=splits,
-                human_model_path=human_model_path), folders)
+                process_scene_anno, annotation_root=annotation_path, splits=splits, human_model_path=human_model_path
+            ),
+            folders,
+        )

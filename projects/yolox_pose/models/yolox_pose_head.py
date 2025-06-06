@@ -40,10 +40,8 @@ class YOLOXPoseHeadModule(YOLOXHeadModule):
         pose_convs, offsets_preds, vis_preds = [], [], []
         for _ in self.featmap_strides:
             pose_convs.append(self._build_stacked_convs())
-            offsets_preds.append(
-                nn.Conv2d(self.feat_channels, self.num_keypoints * 2, 1))
-            vis_preds.append(
-                nn.Conv2d(self.feat_channels, self.num_keypoints, 1))
+            offsets_preds.append(nn.Conv2d(self.feat_channels, self.num_keypoints * 2, 1))
+            vis_preds.append(nn.Conv2d(self.feat_channels, self.num_keypoints, 1))
 
         self.multi_level_pose_convs = ModuleList(pose_convs)
         self.multi_level_conv_offsets = ModuleList(offsets_preds)
@@ -96,25 +94,25 @@ class YOLOXPoseHead(YOLOXHead):
 
         # ensure that the `sigmas` in self.assigner.oks_calculator
         # is on the same device as the model
-        if hasattr(self.assigner, 'oks_calculator'):
-            self.add_module('assigner_oks_calculator',
-                            self.assigner.oks_calculator)
+        if hasattr(self.assigner, "oks_calculator"):
+            self.add_module("assigner_oks_calculator", self.assigner.oks_calculator)
 
     def _clear(self):
         """Clear variable buffers."""
         self.sampler.clear()
         self._log.clear()
 
-    def loss_by_feat(self,
-                     cls_scores: Sequence[Tensor],
-                     bbox_preds: Sequence[Tensor],
-                     objectnesses: Sequence[Tensor],
-                     kpt_preds: Sequence[Tensor],
-                     vis_preds: Sequence[Tensor],
-                     batch_gt_instances: Sequence[InstanceData],
-                     batch_img_metas: Sequence[dict],
-                     batch_gt_instances_ignore: OptInstanceList = None
-                     ) -> dict:
+    def loss_by_feat(
+        self,
+        cls_scores: Sequence[Tensor],
+        bbox_preds: Sequence[Tensor],
+        objectnesses: Sequence[Tensor],
+        kpt_preds: Sequence[Tensor],
+        vis_preds: Sequence[Tensor],
+        batch_gt_instances: Sequence[InstanceData],
+        batch_img_metas: Sequence[dict],
+        batch_gt_instances_ignore: OptInstanceList = None,
+    ) -> dict:
         """Calculate the loss based on the features extracted by the detection
         head.
 
@@ -125,50 +123,35 @@ class YOLOXPoseHead(YOLOXHead):
         self._clear()
 
         # collect keypoints coordinates and visibility from model predictions
-        kpt_preds = torch.cat([
-            kpt_pred.flatten(2).permute(0, 2, 1).contiguous()
-            for kpt_pred in kpt_preds
-        ],
-                              dim=1)
+        kpt_preds = torch.cat([kpt_pred.flatten(2).permute(0, 2, 1).contiguous() for kpt_pred in kpt_preds], dim=1)
 
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
         mlvl_priors = self.prior_generator.grid_priors(
-            featmap_sizes,
-            dtype=cls_scores[0].dtype,
-            device=cls_scores[0].device,
-            with_stride=True)
+            featmap_sizes, dtype=cls_scores[0].dtype, device=cls_scores[0].device, with_stride=True
+        )
         grid_priors = torch.cat(mlvl_priors)
 
-        flatten_kpts = self.decode_pose(grid_priors[..., :2], kpt_preds,
-                                        grid_priors[..., 2])
+        flatten_kpts = self.decode_pose(grid_priors[..., :2], kpt_preds, grid_priors[..., 2])
 
-        vis_preds = torch.cat([
-            vis_pred.flatten(2).permute(0, 2, 1).contiguous()
-            for vis_pred in vis_preds
-        ],
-                              dim=1)
+        vis_preds = torch.cat([vis_pred.flatten(2).permute(0, 2, 1).contiguous() for vis_pred in vis_preds], dim=1)
 
         # compute detection losses and collect targets for keypoints
         # predictions simultaneously
-        self._log['pred_keypoints'] = list(flatten_kpts.detach().split(
-            1, dim=0))
-        self._log['pred_keypoints_vis'] = list(vis_preds.detach().split(
-            1, dim=0))
+        self._log["pred_keypoints"] = list(flatten_kpts.detach().split(1, dim=0))
+        self._log["pred_keypoints_vis"] = list(vis_preds.detach().split(1, dim=0))
 
-        losses = super().loss_by_feat(cls_scores, bbox_preds, objectnesses,
-                                      batch_gt_instances, batch_img_metas,
-                                      batch_gt_instances_ignore)
+        losses = super().loss_by_feat(
+            cls_scores, bbox_preds, objectnesses, batch_gt_instances, batch_img_metas, batch_gt_instances_ignore
+        )
 
         kpt_targets, vis_targets = [], []
-        sampling_results = self.sampler.log['sample']
+        sampling_results = self.sampler.log["sample"]
         sampling_result_idx = 0
         for gt_instances in batch_gt_instances:
             if len(gt_instances) > 0:
                 sampling_result = sampling_results[sampling_result_idx]
-                kpt_target = gt_instances['keypoints'][
-                    sampling_result.pos_assigned_gt_inds]
-                vis_target = gt_instances['keypoints_visible'][
-                    sampling_result.pos_assigned_gt_inds]
+                kpt_target = gt_instances["keypoints"][sampling_result.pos_assigned_gt_inds]
+                vis_target = gt_instances["keypoints_visible"][sampling_result.pos_assigned_gt_inds]
                 sampling_result_idx += 1
                 kpt_targets.append(kpt_target)
                 vis_targets.append(vis_target)
@@ -180,14 +163,12 @@ class YOLOXPoseHead(YOLOXHead):
         # compute keypoint losses
         if len(kpt_targets) > 0:
             vis_targets = (vis_targets > 0).float()
-            pos_masks = torch.cat(self._log['foreground_mask'], 0)
-            bbox_targets = torch.cat(self._log['bbox_target'], 0)
+            pos_masks = torch.cat(self._log["foreground_mask"], 0)
+            bbox_targets = torch.cat(self._log["bbox_target"], 0)
             loss_kpt = self.loss_pose(
-                flatten_kpts.view(-1, self.num_keypoints, 2)[pos_masks],
-                kpt_targets, vis_targets, bbox_targets)
-            loss_vis = self.loss_cls(
-                vis_preds.view(-1, self.num_keypoints)[pos_masks],
-                vis_targets) / vis_targets.sum()
+                flatten_kpts.view(-1, self.num_keypoints, 2)[pos_masks], kpt_targets, vis_targets, bbox_targets
+            )
+            loss_vis = self.loss_cls(vis_preds.view(-1, self.num_keypoints)[pos_masks], vis_targets) / vis_targets.sum()
         else:
             loss_kpt = kpt_preds.sum() * 0
             loss_vis = vis_preds.sum() * 0
@@ -198,15 +179,16 @@ class YOLOXPoseHead(YOLOXHead):
         return losses
 
     @torch.no_grad()
-    def _get_targets_single(self,
-                            priors: Tensor,
-                            cls_preds: Tensor,
-                            decoded_bboxes: Tensor,
-                            objectness: Tensor,
-                            gt_instances: InstanceData,
-                            img_meta: dict,
-                            gt_instances_ignore: Optional[InstanceData] = None
-                            ) -> tuple:
+    def _get_targets_single(
+        self,
+        priors: Tensor,
+        cls_preds: Tensor,
+        decoded_bboxes: Tensor,
+        objectness: Tensor,
+        gt_instances: InstanceData,
+        img_meta: dict,
+        gt_instances_ignore: Optional[InstanceData] = None,
+    ) -> tuple:
         """Calculates targets for a single image, and saves them to the log.
 
         This method is similar to the _get_targets_single method in the base
@@ -217,29 +199,30 @@ class YOLOXPoseHead(YOLOXHead):
         # Construct a combined representation of bboxes and keypoints to
         # ensure keypoints are also involved in the positive sample
         # assignment process
-        kpt = self._log['pred_keypoints'].pop(0).squeeze(0)
-        kpt_vis = self._log['pred_keypoints_vis'].pop(0).squeeze(0)
+        kpt = self._log["pred_keypoints"].pop(0).squeeze(0)
+        kpt_vis = self._log["pred_keypoints_vis"].pop(0).squeeze(0)
         kpt = torch.cat((kpt, kpt_vis.unsqueeze(-1)), dim=-1)
         decoded_bboxes = torch.cat((decoded_bboxes, kpt.flatten(1)), dim=1)
 
-        targets = super()._get_targets_single(priors, cls_preds,
-                                              decoded_bboxes, objectness,
-                                              gt_instances, img_meta,
-                                              gt_instances_ignore)
-        self._log['foreground_mask'].append(targets[0])
-        self._log['bbox_target'].append(targets[3])
+        targets = super()._get_targets_single(
+            priors, cls_preds, decoded_bboxes, objectness, gt_instances, img_meta, gt_instances_ignore
+        )
+        self._log["foreground_mask"].append(targets[0])
+        self._log["bbox_target"].append(targets[3])
         return targets
 
-    def predict_by_feat(self,
-                        cls_scores: List[Tensor],
-                        bbox_preds: List[Tensor],
-                        objectnesses: Optional[List[Tensor]] = None,
-                        kpt_preds: Optional[List[Tensor]] = None,
-                        vis_preds: Optional[List[Tensor]] = None,
-                        batch_img_metas: Optional[List[dict]] = None,
-                        cfg: Optional[ConfigDict] = None,
-                        rescale: bool = True,
-                        with_nms: bool = True) -> List[InstanceData]:
+    def predict_by_feat(
+        self,
+        cls_scores: List[Tensor],
+        bbox_preds: List[Tensor],
+        objectnesses: Optional[List[Tensor]] = None,
+        kpt_preds: Optional[List[Tensor]] = None,
+        vis_preds: Optional[List[Tensor]] = None,
+        batch_img_metas: Optional[List[dict]] = None,
+        cfg: Optional[ConfigDict] = None,
+        rescale: bool = True,
+        with_nms: bool = True,
+    ) -> List[InstanceData]:
         """Transform a batch of output features extracted by the head into bbox
         and keypoint results.
 
@@ -248,16 +231,11 @@ class YOLOXPoseHead(YOLOXHead):
         """
 
         # calculate predicted bboxes and get the kept instances indices
-        with OutputSaveFunctionWrapper(
-                filter_scores_and_topk,
-                super().predict_by_feat.__globals__) as outputs_1:
-            with OutputSaveFunctionWrapper(
-                    batched_nms,
-                    super()._bbox_post_process.__globals__) as outputs_2:
-                results_list = super().predict_by_feat(cls_scores, bbox_preds,
-                                                       objectnesses,
-                                                       batch_img_metas, cfg,
-                                                       rescale, with_nms)
+        with OutputSaveFunctionWrapper(filter_scores_and_topk, super().predict_by_feat.__globals__) as outputs_1:
+            with OutputSaveFunctionWrapper(batched_nms, super()._bbox_post_process.__globals__) as outputs_2:
+                results_list = super().predict_by_feat(
+                    cls_scores, bbox_preds, objectnesses, batch_img_metas, cfg, rescale, with_nms
+                )
                 keep_indices_topk = [out[2] for out in outputs_1]
                 keep_indices_nms = [out[1] for out in outputs_2]
 
@@ -267,30 +245,25 @@ class YOLOXPoseHead(YOLOXHead):
         featmap_sizes = [vis_pred.shape[2:] for vis_pred in vis_preds]
         priors = torch.cat(self.mlvl_priors)
         strides = [
-            priors.new_full((featmap_size.numel() * self.num_base_priors, ),
-                            stride) for featmap_size, stride in zip(
-                                featmap_sizes, self.featmap_strides)
+            priors.new_full((featmap_size.numel() * self.num_base_priors,), stride)
+            for featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
         ]
         strides = torch.cat(strides)
-        kpt_preds = torch.cat([
-            kpt_pred.permute(0, 2, 3, 1).reshape(
-                num_imgs, -1, self.num_keypoints * 2) for kpt_pred in kpt_preds
-        ],
-                              dim=1)
+        kpt_preds = torch.cat(
+            [kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints * 2) for kpt_pred in kpt_preds],
+            dim=1,
+        )
         flatten_decoded_kpts = self.decode_pose(priors, kpt_preds, strides)
 
-        vis_preds = torch.cat([
-            vis_pred.permute(0, 2, 3, 1).reshape(
-                num_imgs, -1, self.num_keypoints) for vis_pred in vis_preds
-        ],
-                              dim=1).sigmoid()
+        vis_preds = torch.cat(
+            [vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints) for vis_pred in vis_preds], dim=1
+        ).sigmoid()
 
         # select keypoints predictions according to bbox scores and nms result
         keep_indices_nms_idx = 0
-        for pred_instances, kpts, kpts_vis, img_meta, keep_idxs \
-            in zip(
-                results_list, flatten_decoded_kpts, vis_preds,
-                batch_img_metas, keep_indices_topk):
+        for pred_instances, kpts, kpts_vis, img_meta, keep_idxs in zip(
+            results_list, flatten_decoded_kpts, vis_preds, batch_img_metas, keep_indices_topk
+        ):
 
             pred_instances.bbox_scores = pred_instances.scores
 
@@ -303,12 +276,11 @@ class YOLOXPoseHead(YOLOXHead):
             kpts_vis = kpts_vis[keep_idxs]
 
             if rescale:
-                pad_param = img_meta.get('img_meta', None)
-                scale_factor = img_meta['scale_factor']
+                pad_param = img_meta.get("img_meta", None)
+                scale_factor = img_meta["scale_factor"]
                 if pad_param is not None:
                     kpts -= kpts.new_tensor([pad_param[2], pad_param[0]])
-                kpts /= kpts.new_tensor(scale_factor).repeat(
-                    (1, self.num_keypoints, 1))
+                kpts /= kpts.new_tensor(scale_factor).repeat((1, self.num_keypoints, 1))
 
             keep_idxs_nms = keep_indices_nms[keep_indices_nms_idx]
             kpts = kpts[keep_idxs_nms]
@@ -320,18 +292,13 @@ class YOLOXPoseHead(YOLOXHead):
 
         return results_list
 
-    def predict(self,
-                x: Tuple[Tensor],
-                batch_data_samples,
-                rescale: bool = False):
-        predictions = [
-            pred_instances.numpy() for pred_instances in super().predict(
-                x, batch_data_samples, rescale)
-        ]
+    def predict(self, x: Tuple[Tensor], batch_data_samples, rescale: bool = False):
+        predictions = [pred_instances.numpy() for pred_instances in super().predict(x, batch_data_samples, rescale)]
         return predictions
 
-    def decode_pose(self, grids: torch.Tensor, offsets: torch.Tensor,
-                    strides: Union[torch.Tensor, int]) -> torch.Tensor:
+    def decode_pose(
+        self, grids: torch.Tensor, offsets: torch.Tensor, strides: Union[torch.Tensor, int]
+    ) -> torch.Tensor:
         """Decode regression offsets to keypoints.
 
         Args:
@@ -354,6 +321,5 @@ class YOLOXPoseHead(YOLOXHead):
         return xy_coordinates
 
     @staticmethod
-    def gt_instances_preprocess(batch_gt_instances: List[InstanceData], *args,
-                                **kwargs) -> List[InstanceData]:
+    def gt_instances_preprocess(batch_gt_instances: List[InstanceData], *args, **kwargs) -> List[InstanceData]:
         return batch_gt_instances

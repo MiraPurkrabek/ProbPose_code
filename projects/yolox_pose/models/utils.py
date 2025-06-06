@@ -68,7 +68,7 @@ class OutputSaveFunctionWrapper:
 
         if isinstance(spec, dict):
             self.spec = spec
-        elif hasattr(func, '__globals__'):
+        elif hasattr(func, "__globals__"):
             self.spec = func.__globals__
         else:
             raise ValueError

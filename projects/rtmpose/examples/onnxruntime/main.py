@@ -12,23 +12,16 @@ logger = loguru.logger
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='RTMPose ONNX inference demo.')
-    parser.add_argument('onnx_file', help='ONNX file path')
-    parser.add_argument('image_file', help='Input image file path')
-    parser.add_argument(
-        '--device', help='device type for inference', default='cpu')
-    parser.add_argument(
-        '--save-path',
-        help='path to save the output image',
-        default='output.jpg')
+    parser = argparse.ArgumentParser(description="RTMPose ONNX inference demo.")
+    parser.add_argument("onnx_file", help="ONNX file path")
+    parser.add_argument("image_file", help="Input image file path")
+    parser.add_argument("--device", help="device type for inference", default="cpu")
+    parser.add_argument("--save-path", help="path to save the output image", default="output.jpg")
     args = parser.parse_args()
     return args
 
 
-def preprocess(
-    img: np.ndarray, input_size: Tuple[int, int] = (192, 256)
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def preprocess(img: np.ndarray, input_size: Tuple[int, int] = (192, 256)) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Do preprocessing for RTMPose model inference.
 
     Args:
@@ -59,7 +52,7 @@ def preprocess(
     return resized_img, center, scale
 
 
-def build_session(onnx_file: str, device: str = 'cpu') -> ort.InferenceSession:
+def build_session(onnx_file: str, device: str = "cpu") -> ort.InferenceSession:
     """Build onnxruntime session.
 
     Args:
@@ -69,8 +62,7 @@ def build_session(onnx_file: str, device: str = 'cpu') -> ort.InferenceSession:
     Returns:
         sess (ort.InferenceSession): ONNXRuntime session.
     """
-    providers = ['CPUExecutionProvider'
-                 ] if device == 'cpu' else ['CUDAExecutionProvider']
+    providers = ["CPUExecutionProvider"] if device == "cpu" else ["CUDAExecutionProvider"]
     sess = ort.InferenceSession(path_or_bytes=onnx_file, providers=providers)
 
     return sess
@@ -101,12 +93,13 @@ def inference(sess: ort.InferenceSession, img: np.ndarray) -> np.ndarray:
     return outputs
 
 
-def postprocess(outputs: List[np.ndarray],
-                model_input_size: Tuple[int, int],
-                center: Tuple[int, int],
-                scale: Tuple[int, int],
-                simcc_split_ratio: float = 2.0
-                ) -> Tuple[np.ndarray, np.ndarray]:
+def postprocess(
+    outputs: List[np.ndarray],
+    model_input_size: Tuple[int, int],
+    center: Tuple[int, int],
+    scale: Tuple[int, int],
+    simcc_split_ratio: float = 2.0,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Postprocess for RTMPose model output.
 
     Args:
@@ -131,11 +124,9 @@ def postprocess(outputs: List[np.ndarray],
     return keypoints, scores
 
 
-def visualize(img: np.ndarray,
-              keypoints: np.ndarray,
-              scores: np.ndarray,
-              filename: str = 'output.jpg',
-              thr=0.3) -> np.ndarray:
+def visualize(
+    img: np.ndarray, keypoints: np.ndarray, scores: np.ndarray, filename: str = "output.jpg", thr=0.3
+) -> np.ndarray:
     """Visualize the keypoints and skeleton on image.
 
     Args:
@@ -148,46 +139,300 @@ def visualize(img: np.ndarray,
         img (np.ndarray): Visualized image.
     """
     # default color
-    skeleton = [(15, 13), (13, 11), (16, 14), (14, 12), (11, 12), (5, 11),
-                (6, 12), (5, 6), (5, 7), (6, 8), (7, 9), (8, 10), (1, 2),
-                (0, 1), (0, 2), (1, 3), (2, 4), (3, 5), (4, 6), (15, 17),
-                (15, 18), (15, 19), (16, 20), (16, 21), (16, 22), (91, 92),
-                (92, 93), (93, 94), (94, 95), (91, 96), (96, 97), (97, 98),
-                (98, 99), (91, 100), (100, 101), (101, 102), (102, 103),
-                (91, 104), (104, 105), (105, 106), (106, 107), (91, 108),
-                (108, 109), (109, 110), (110, 111), (112, 113), (113, 114),
-                (114, 115), (115, 116), (112, 117), (117, 118), (118, 119),
-                (119, 120), (112, 121), (121, 122), (122, 123), (123, 124),
-                (112, 125), (125, 126), (126, 127), (127, 128), (112, 129),
-                (129, 130), (130, 131), (131, 132)]
-    palette = [[51, 153, 255], [0, 255, 0], [255, 128, 0], [255, 255, 255],
-               [255, 153, 255], [102, 178, 255], [255, 51, 51]]
+    skeleton = [
+        (15, 13),
+        (13, 11),
+        (16, 14),
+        (14, 12),
+        (11, 12),
+        (5, 11),
+        (6, 12),
+        (5, 6),
+        (5, 7),
+        (6, 8),
+        (7, 9),
+        (8, 10),
+        (1, 2),
+        (0, 1),
+        (0, 2),
+        (1, 3),
+        (2, 4),
+        (3, 5),
+        (4, 6),
+        (15, 17),
+        (15, 18),
+        (15, 19),
+        (16, 20),
+        (16, 21),
+        (16, 22),
+        (91, 92),
+        (92, 93),
+        (93, 94),
+        (94, 95),
+        (91, 96),
+        (96, 97),
+        (97, 98),
+        (98, 99),
+        (91, 100),
+        (100, 101),
+        (101, 102),
+        (102, 103),
+        (91, 104),
+        (104, 105),
+        (105, 106),
+        (106, 107),
+        (91, 108),
+        (108, 109),
+        (109, 110),
+        (110, 111),
+        (112, 113),
+        (113, 114),
+        (114, 115),
+        (115, 116),
+        (112, 117),
+        (117, 118),
+        (118, 119),
+        (119, 120),
+        (112, 121),
+        (121, 122),
+        (122, 123),
+        (123, 124),
+        (112, 125),
+        (125, 126),
+        (126, 127),
+        (127, 128),
+        (112, 129),
+        (129, 130),
+        (130, 131),
+        (131, 132),
+    ]
+    palette = [
+        [51, 153, 255],
+        [0, 255, 0],
+        [255, 128, 0],
+        [255, 255, 255],
+        [255, 153, 255],
+        [102, 178, 255],
+        [255, 51, 51],
+    ]
     link_color = [
-        1, 1, 2, 2, 0, 0, 0, 0, 1, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2,
-        2, 2, 2, 2, 2, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 1, 1, 1, 1, 2, 2, 2,
-        2, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 1, 1, 1, 1
+        1,
+        1,
+        2,
+        2,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        1,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6,
+        6,
+        6,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6,
+        6,
+        6,
+        1,
+        1,
+        1,
+        1,
     ]
     point_color = [
-        0, 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 3,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2,
-        4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 1, 1, 1, 1, 3, 2, 2, 2, 2, 4, 4, 4,
-        4, 5, 5, 5, 5, 6, 6, 6, 6, 1, 1, 1, 1
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6,
+        6,
+        6,
+        1,
+        1,
+        1,
+        1,
+        3,
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6,
+        6,
+        6,
+        1,
+        1,
+        1,
+        1,
     ]
 
     # draw keypoints and skeleton
     for kpts, score in zip(keypoints, scores):
         keypoints_num = len(score)
         for kpt, color in zip(kpts, point_color):
-            cv2.circle(img, tuple(kpt.astype(np.int32)), 1, palette[color], 1,
-                       cv2.LINE_AA)
+            cv2.circle(img, tuple(kpt.astype(np.int32)), 1, palette[color], 1, cv2.LINE_AA)
         for (u, v), color in zip(skeleton, link_color):
-            if u < keypoints_num and v < keypoints_num \
-                        and score[u] > thr and score[v] > thr:
-                cv2.line(img, tuple(kpts[u].astype(np.int32)),
-                         tuple(kpts[v].astype(np.int32)), palette[color], 2,
-                         cv2.LINE_AA)
+            if u < keypoints_num and v < keypoints_num and score[u] > thr and score[v] > thr:
+                cv2.line(
+                    img,
+                    tuple(kpts[u].astype(np.int32)),
+                    tuple(kpts[v].astype(np.int32)),
+                    palette[color],
+                    2,
+                    cv2.LINE_AA,
+                )
 
     # save to local
     cv2.imwrite(filename, img)
@@ -195,8 +440,7 @@ def visualize(img: np.ndarray,
     return img
 
 
-def bbox_xyxy2cs(bbox: np.ndarray,
-                 padding: float = 1.) -> Tuple[np.ndarray, np.ndarray]:
+def bbox_xyxy2cs(bbox: np.ndarray, padding: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
     """Transform the bbox format from (x,y,w,h) into (center, scale)
 
     Args:
@@ -229,8 +473,7 @@ def bbox_xyxy2cs(bbox: np.ndarray,
     return center, scale
 
 
-def _fix_aspect_ratio(bbox_scale: np.ndarray,
-                      aspect_ratio: float) -> np.ndarray:
+def _fix_aspect_ratio(bbox_scale: np.ndarray, aspect_ratio: float) -> np.ndarray:
     """Extend the scale to match the given aspect ratio.
 
     Args:
@@ -241,9 +484,7 @@ def _fix_aspect_ratio(bbox_scale: np.ndarray,
         np.ndarray: The reshaped image scale in (2, )
     """
     w, h = np.hsplit(bbox_scale, [1])
-    bbox_scale = np.where(w > h * aspect_ratio,
-                          np.hstack([w, w / aspect_ratio]),
-                          np.hstack([h * aspect_ratio, h]))
+    bbox_scale = np.where(w > h * aspect_ratio, np.hstack([w, w / aspect_ratio]), np.hstack([h * aspect_ratio, h]))
     return bbox_scale
 
 
@@ -281,12 +522,14 @@ def _get_3rd_point(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return c
 
 
-def get_warp_matrix(center: np.ndarray,
-                    scale: np.ndarray,
-                    rot: float,
-                    output_size: Tuple[int, int],
-                    shift: Tuple[float, float] = (0., 0.),
-                    inv: bool = False) -> np.ndarray:
+def get_warp_matrix(
+    center: np.ndarray,
+    scale: np.ndarray,
+    rot: float,
+    output_size: Tuple[int, int],
+    shift: Tuple[float, float] = (0.0, 0.0),
+    inv: bool = False,
+) -> np.ndarray:
     """Calculate the affine transformation matrix that can warp the bbox area
     in the input image to the output size.
 
@@ -312,8 +555,8 @@ def get_warp_matrix(center: np.ndarray,
 
     # compute transformation matrix
     rot_rad = np.deg2rad(rot)
-    src_dir = _rotate_point(np.array([0., src_w * -0.5]), rot_rad)
-    dst_dir = np.array([0., dst_w * -0.5])
+    src_dir = _rotate_point(np.array([0.0, src_w * -0.5]), rot_rad)
+    dst_dir = np.array([0.0, dst_w * -0.5])
 
     # get four corners of the src rectangle in the original image
     src = np.zeros((3, 2), dtype=np.float32)
@@ -335,8 +578,9 @@ def get_warp_matrix(center: np.ndarray,
     return warp_mat
 
 
-def top_down_affine(input_size: dict, bbox_scale: dict, bbox_center: dict,
-                    img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def top_down_affine(
+    input_size: dict, bbox_scale: dict, bbox_center: dict, img: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """Get the bbox image as the model input by affine transform.
 
     Args:
@@ -368,8 +612,7 @@ def top_down_affine(input_size: dict, bbox_scale: dict, bbox_center: dict,
     return img, bbox_scale
 
 
-def get_simcc_maximum(simcc_x: np.ndarray,
-                      simcc_y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_simcc_maximum(simcc_x: np.ndarray, simcc_y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Get maximum response location and value from simcc representations.
 
     Note:
@@ -404,7 +647,7 @@ def get_simcc_maximum(simcc_x: np.ndarray,
     mask = max_val_x > max_val_y
     max_val_x[mask] = max_val_y[mask]
     vals = max_val_x
-    locs[vals <= 0.] = -1
+    locs[vals <= 0.0] = -1
 
     # reshape
     locs = locs.reshape(N, K, 2)
@@ -413,8 +656,7 @@ def get_simcc_maximum(simcc_x: np.ndarray,
     return locs, vals
 
 
-def decode(simcc_x: np.ndarray, simcc_y: np.ndarray,
-           simcc_split_ratio) -> Tuple[np.ndarray, np.ndarray]:
+def decode(simcc_x: np.ndarray, simcc_y: np.ndarray, simcc_split_ratio) -> Tuple[np.ndarray, np.ndarray]:
     """Modulate simcc distribution with Gaussian.
 
     Args:
@@ -435,40 +677,39 @@ def decode(simcc_x: np.ndarray, simcc_y: np.ndarray,
 
 def main():
     args = parse_args()
-    logger.info('Start running model on RTMPose...')
+    logger.info("Start running model on RTMPose...")
 
     # read image from file
-    logger.info('1. Read image from {}...'.format(args.image_file))
+    logger.info("1. Read image from {}...".format(args.image_file))
     img = cv2.imread(args.image_file)
 
     # build onnx model
-    logger.info('2. Build onnx model from {}...'.format(args.onnx_file))
+    logger.info("2. Build onnx model from {}...".format(args.onnx_file))
     sess = build_session(args.onnx_file, args.device)
     h, w = sess.get_inputs()[0].shape[2:]
     model_input_size = (w, h)
 
     # preprocessing
-    logger.info('3. Preprocess image...')
+    logger.info("3. Preprocess image...")
     resized_img, center, scale = preprocess(img, model_input_size)
 
     # inference
-    logger.info('4. Inference...')
+    logger.info("4. Inference...")
     start_time = time.time()
     outputs = inference(sess, resized_img)
     end_time = time.time()
-    logger.info('4. Inference done, time cost: {:.4f}s'.format(end_time -
-                                                               start_time))
+    logger.info("4. Inference done, time cost: {:.4f}s".format(end_time - start_time))
 
     # postprocessing
-    logger.info('5. Postprocess...')
+    logger.info("5. Postprocess...")
     keypoints, scores = postprocess(outputs, model_input_size, center, scale)
 
     # visualize inference result
-    logger.info('6. Visualize inference result...')
+    logger.info("6. Visualize inference result...")
     visualize(img, keypoints, scores, args.save_path)
 
-    logger.info('Done...')
+    logger.info("Done...")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

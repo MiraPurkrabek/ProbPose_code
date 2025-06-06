@@ -6,15 +6,20 @@ import numpy as np
 
 from mmpose.registry import KEYPOINT_CODECS
 from .base import BaseKeypointCodec
-from .utils import (generate_offset_heatmap, generate_probmaps,
-                    generate_udp_gaussian_heatmaps, get_heatmap_expected_value,
-                    get_heatmap_maximum, refine_keypoints_dark_udp)
+from .utils import (
+    generate_offset_heatmap,
+    generate_probmaps,
+    generate_udp_gaussian_heatmaps,
+    get_heatmap_expected_value,
+    get_heatmap_maximum,
+    refine_keypoints_dark_udp,
+)
 
 
 @KEYPOINT_CODECS.register_module()
 class DoubleProbMap(BaseKeypointCodec):
     r"""Generate two probability maps for keypoint detection using expected OKS scores.
-    See the paper: `ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`_ 
+    See the paper: `ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`_
     by Purkrabek et al. (2025) for details.
 
     Note:
@@ -60,23 +65,28 @@ class DoubleProbMap(BaseKeypointCodec):
         blur_kernel_size (int): The Gaussian blur kernel size of the heatmap
             modulation in DarkPose. Defaults to 11
 
-    .. _`ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`: 
+    .. _`ProbPose: A Probabilistic Approach to 2D Human Pose Estimation`:
         https://arxiv.org/abs/2412.02254
     """
 
-    label_mapping_table = dict(keypoint_weights='keypoint_weights', )
-    field_mapping_table = dict(heatmaps='heatmaps', )
+    label_mapping_table = dict(
+        keypoint_weights="keypoint_weights",
+    )
+    field_mapping_table = dict(
+        heatmaps="heatmaps",
+    )
 
-    def __init__(self,
-                 input_size: Tuple[int, int],
-                 heatmap_size: Tuple[int, int],
-                 in_heatmap_padding: float = 1.0,
-                 out_heatmap_padding: float = 1.0,
-                 heatmap_type: str = 'gaussian',
-                 sigma: float = 2.,
-                 radius_factor: float = 0.0546875,
-                 blur_kernel_size: int = 11,
-                 ) -> None:
+    def __init__(
+        self,
+        input_size: Tuple[int, int],
+        heatmap_size: Tuple[int, int],
+        in_heatmap_padding: float = 1.0,
+        out_heatmap_padding: float = 1.0,
+        heatmap_type: str = "gaussian",
+        sigma: float = 2.0,
+        radius_factor: float = 0.0546875,
+        blur_kernel_size: int = 11,
+    ) -> None:
         super().__init__()
         self.input_size = input_size
         self.heatmap_size = heatmap_size
@@ -84,7 +94,7 @@ class DoubleProbMap(BaseKeypointCodec):
         self.radius_factor = radius_factor
         self.heatmap_type = heatmap_type
         self.blur_kernel_size = blur_kernel_size
-        
+
         self.input_center = np.array(input_size) / 2
         self.input_wh = np.array(input_size)
         self.heatmap_center = np.array(heatmap_size) / 2
@@ -98,17 +108,16 @@ class DoubleProbMap(BaseKeypointCodec):
         self.in_activation_map_tl = self.input_center - self.in_activation_map_wh / 2
         self.out_activation_map_tl = self.input_center - self.out_activation_map_wh / 2
 
-        self.in_scale_factor = ((self.in_activation_map_wh - 1) /
-                                (np.array(heatmap_size)-1)).astype(np.float32)
-        self.out_scale_factor = ((self.out_activation_map_wh - 1) /
-                                (np.array(heatmap_size)-1)).astype(np.float32)
+        self.in_scale_factor = ((self.in_activation_map_wh - 1) / (np.array(heatmap_size) - 1)).astype(np.float32)
+        self.out_scale_factor = ((self.out_activation_map_wh - 1) / (np.array(heatmap_size) - 1)).astype(np.float32)
 
-        if self.heatmap_type not in {'gaussian', 'combined'}:
+        if self.heatmap_type not in {"gaussian", "combined"}:
             raise ValueError(
-                f'{self.__class__.__name__} got invalid `heatmap_type` value'
-                f'{self.heatmap_type}. Should be one of '
-                '{"gaussian", "combined"}')
-        
+                f"{self.__class__.__name__} got invalid `heatmap_type` value"
+                f"{self.heatmap_type}. Should be one of "
+                '{"gaussian", "combined"}'
+            )
+
     def _kpts_to_activation_pts(self, keypoints: np.ndarray, htm_type: str = "in") -> np.ndarray:
         """
         Transform the keypoint coordinates to the activation space.
@@ -123,7 +132,7 @@ class DoubleProbMap(BaseKeypointCodec):
         transformed_keypoints = keypoints - top_left
         transformed_keypoints = transformed_keypoints / scale_factor
         return transformed_keypoints
-    
+
     def activation_pts_to_kpts(self, keypoints: np.ndarray, htm_type: str = "in") -> np.ndarray:
         """
         Transform the points in activation map to the keypoint coordinates.
@@ -140,11 +149,13 @@ class DoubleProbMap(BaseKeypointCodec):
         transformed_keypoints += top_left
         return transformed_keypoints
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None,
-               id_similarity: Optional[float] = 0.0,
-               keypoints_visibility: Optional[np.ndarray] = None) -> dict:
+    def encode(
+        self,
+        keypoints: np.ndarray,
+        keypoints_visible: Optional[np.ndarray] = None,
+        id_similarity: Optional[float] = 0.0,
+        keypoints_visibility: Optional[np.ndarray] = None,
+    ) -> dict:
         """Encode keypoints into heatmaps. Note that the original keypoint
         coordinates should be in the input image space.
 
@@ -168,17 +179,15 @@ class DoubleProbMap(BaseKeypointCodec):
             - keypoint_weights (np.ndarray): The target weights in shape
                 (K,)
         """
-        assert keypoints.shape[0] == 1, (
-            f'{self.__class__.__name__} only support single-instance '
-            'keypoint encoding')
-        
+        assert keypoints.shape[0] == 1, f"{self.__class__.__name__} only support single-instance " "keypoint encoding"
+
         if keypoints_visibility is None:
             keypoints_visibility = np.zeros(keypoints.shape[:2], dtype=np.float32)
 
         if keypoints_visible is None:
             keypoints_visible = np.ones(keypoints.shape[:2], dtype=np.float32)
 
-        if self.heatmap_type == 'gaussian':
+        if self.heatmap_type == "gaussian":
             heatmaps, keypoint_weights = generate_probmaps(
                 heatmap_size=self.heatmap_size,
                 keypoints=self._kpts_to_activation_pts(keypoints, htm_type="in"),
@@ -191,26 +200,29 @@ class DoubleProbMap(BaseKeypointCodec):
                 keypoints_visible=keypoints_visible,
                 sigma=self.sigma,
             )
-        
-        elif self.heatmap_type == 'combined':
+
+        elif self.heatmap_type == "combined":
             heatmaps, keypoint_weights = generate_offset_heatmap(
                 heatmap_size=self.heatmap_size,
                 keypoints=self._kpts_to_activation_pts(keypoints, htm_type="in"),
                 keypoints_visible=keypoints_visible,
-                radius_factor=self.radius_factor)
+                radius_factor=self.radius_factor,
+            )
             out_heatmaps, out_kpt_weights = generate_offset_heatmap(
                 heatmap_size=self.heatmap_size,
                 keypoints=self._kpts_to_activation_pts(keypoints, htm_type="out"),
                 keypoints_visible=keypoints_visible,
-                radius_factor=self.radius_factor)
+                radius_factor=self.radius_factor,
+            )
         else:
             raise ValueError(
-                f'{self.__class__.__name__} got invalid `heatmap_type` value'
-                f'{self.heatmap_type}. Should be one of '
-                '{"gaussian", "combined"}')
+                f"{self.__class__.__name__} got invalid `heatmap_type` value"
+                f"{self.heatmap_type}. Should be one of "
+                '{"gaussian", "combined"}'
+            )
 
         annotated = keypoints_visible > 0
-        
+
         out_heatmap_keypoints = self._kpts_to_activation_pts(keypoints, htm_type="out")
 
         in_image = np.logical_and(
@@ -227,8 +239,8 @@ class DoubleProbMap(BaseKeypointCodec):
         )
 
         # Add zero-th dimension to out_heatmaps
-        out_htms = np.expand_dims(out_heatmaps, axis=0)        
-                
+        out_htms = np.expand_dims(out_heatmaps, axis=0)
+
         encoded = dict(
             heatmaps=heatmaps,
             keypoint_weights=keypoint_weights,
@@ -263,13 +275,13 @@ class DoubleProbMap(BaseKeypointCodec):
         assert htm_type in ["in", "out"]
         heatmaps = encoded.copy()
 
-        if self.heatmap_type == 'gaussian':
+        if self.heatmap_type == "gaussian":
             keypoints, scores = get_heatmap_expected_value(heatmaps)
             # unsqueeze the instance dimension for single-instance results
             keypoints = keypoints[None]
             scores = scores[None]
 
-        elif self.heatmap_type == 'combined':
+        elif self.heatmap_type == "combined":
             _K, H, W = heatmaps.shape
             K = _K // 3
 

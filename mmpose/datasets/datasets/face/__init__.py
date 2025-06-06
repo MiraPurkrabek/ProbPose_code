@@ -8,6 +8,11 @@ from .lapa_dataset import LapaDataset
 from .wflw_dataset import WFLWDataset
 
 __all__ = [
-    'Face300WDataset', 'WFLWDataset', 'AFLWDataset', 'COFWDataset',
-    'CocoWholeBodyFaceDataset', 'LapaDataset', 'Face300WLPDataset'
+    "Face300WDataset",
+    "WFLWDataset",
+    "AFLWDataset",
+    "COFWDataset",
+    "CocoWholeBodyFaceDataset",
+    "LapaDataset",
+    "Face300WLPDataset",
 ]

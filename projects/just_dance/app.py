@@ -9,19 +9,17 @@ from mmengine.utils import mkdir_or_exist  # noqa
 from process_video import VideoProcessor  # noqa
 
 project_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-mmpose_path = project_path.split('/projects', 1)[0]
+mmpose_path = project_path.split("/projects", 1)[0]
 
-os.system('python -m pip install Openmim')
+os.system("python -m pip install Openmim")
 os.system('python -m mim install "mmcv>=2.0.0"')
-os.system('python -m mim install mmengine')
+os.system("python -m mim install mmengine")
 os.system('python -m mim install "mmdet>=3.0.0"')
-os.system(f'python -m mim install -e {mmpose_path}')
+os.system(f"python -m mim install -e {mmpose_path}")
 
-os.environ['PATH'] = f"{os.environ['PATH']}:{project_path}"
-os.environ[
-    'PYTHONPATH'] = f"{os.environ.get('PYTHONPATH', '.')}:{project_path}"
+os.environ["PATH"] = f"{os.environ['PATH']}:{project_path}"
+os.environ["PYTHONPATH"] = f"{os.environ.get('PYTHONPATH', '.')}:{project_path}"
 sys.path.append(project_path)
-
 
 
 def process_video(
@@ -48,70 +46,71 @@ def process_video(
 
 
 # download video resources
-mkdir_or_exist(os.path.join(project_path, 'resources'))
+mkdir_or_exist(os.path.join(project_path, "resources"))
 os.system(
-    f'wget -O {project_path}/resources/tom.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/tom.mp4'  # noqa
+    f"wget -O {project_path}/resources/tom.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/tom.mp4"
+)  # noqa
+os.system(
+    f"wget -O {project_path}/resources/idol_producer.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/idol_producer.mp4"  # noqa
 )
 os.system(
-    f'wget -O {project_path}/resources/idol_producer.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/idol_producer.mp4'  # noqa
+    f"wget -O {project_path}/resources/tsinghua_30fps.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/tsinghua_30fps.mp4"  # noqa
 )
 os.system(
-    f'wget -O {project_path}/resources/tsinghua_30fps.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/tsinghua_30fps.mp4'  # noqa
-)
+    f"wget -O {project_path}/resources/student1.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/student1.mp4"
+)  # noqa
 os.system(
-    f'wget -O {project_path}/resources/student1.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/student1.mp4'  # noqa
-)
-os.system(
-    f'wget -O {project_path}/resources/bear_teacher.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/bear_teacher.mp4'  # noqa
-)
+    f"wget -O {project_path}/resources/bear_teacher.mp4 https://download.openmmlab.com/mmpose/v1/projects/just_dance/bear_teacher.mp4"
+)  # noqa
 
 with gr.Blocks() as demo:
-    with gr.Tab('Upload-Video'):
+    with gr.Tab("Upload-Video"):
         with gr.Row():
             with gr.Column():
-                gr.Markdown('Student Video')
-                student_video = gr.Video(type='mp4')
-                gr.Examples([
-                    os.path.join(project_path, 'resources/tom.mp4'),
-                    os.path.join(project_path, 'resources/tsinghua_30fps.mp4'),
-                    os.path.join(project_path, 'resources/student1.mp4')
-                ], student_video)
+                gr.Markdown("Student Video")
+                student_video = gr.Video(type="mp4")
+                gr.Examples(
+                    [
+                        os.path.join(project_path, "resources/tom.mp4"),
+                        os.path.join(project_path, "resources/tsinghua_30fps.mp4"),
+                        os.path.join(project_path, "resources/student1.mp4"),
+                    ],
+                    student_video,
+                )
             with gr.Column():
-                gr.Markdown('Teacher Video')
-                teacher_video = gr.Video(type='mp4')
-                gr.Examples([
-                    os.path.join(project_path, 'resources/idol_producer.mp4'),
-                    os.path.join(project_path, 'resources/bear_teacher.mp4')
-                ], teacher_video)
+                gr.Markdown("Teacher Video")
+                teacher_video = gr.Video(type="mp4")
+                gr.Examples(
+                    [
+                        os.path.join(project_path, "resources/idol_producer.mp4"),
+                        os.path.join(project_path, "resources/bear_teacher.mp4"),
+                    ],
+                    teacher_video,
+                )
 
-        button = gr.Button('Grading', variant='primary')
-        gr.Markdown('## Display')
+        button = gr.Button("Grading", variant="primary")
+        gr.Markdown("## Display")
         out_video = gr.Video()
 
-        button.click(
-            partial(process_video), [teacher_video, student_video], out_video)
+        button.click(partial(process_video), [teacher_video, student_video], out_video)
 
-    with gr.Tab('Webcam-Video'):
+    with gr.Tab("Webcam-Video"):
         with gr.Row():
             with gr.Column():
-                gr.Markdown('Student Video')
-                student_video = gr.Video(source='webcam', type='mp4')
+                gr.Markdown("Student Video")
+                student_video = gr.Video(source="webcam", type="mp4")
             with gr.Column():
-                gr.Markdown('Teacher Video')
-                teacher_video = gr.Video(type='mp4')
-                gr.Examples([
-                    os.path.join(project_path, 'resources/idol_producer.mp4')
-                ], teacher_video)
-                button_upload = gr.Button('Upload', variant='primary')
+                gr.Markdown("Teacher Video")
+                teacher_video = gr.Video(type="mp4")
+                gr.Examples([os.path.join(project_path, "resources/idol_producer.mp4")], teacher_video)
+                button_upload = gr.Button("Upload", variant="primary")
 
-        button = gr.Button('Grading', variant='primary')
-        gr.Markdown('## Display')
+        button = gr.Button("Grading", variant="primary")
+        gr.Markdown("## Display")
         out_video = gr.Video()
 
-        button_upload.click(
-            partial(process_video), [teacher_video, student_video], out_video)
-        button.click(
-            partial(process_video), [teacher_video, student_video], out_video)
+        button_upload.click(partial(process_video), [teacher_video, student_video], out_video)
+        button.click(partial(process_video), [teacher_video, student_video], out_video)
 
 gr.close_all()
 demo.queue()

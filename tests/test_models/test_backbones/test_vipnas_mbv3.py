@@ -51,7 +51,7 @@ class TestVipnasMbv3(TestCase):
         for param in model.conv1.parameters():
             self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -75,8 +75,7 @@ class TestVipnasMbv3(TestCase):
         self.assertEqual(feat[-1].shape, torch.Size([1, 160, 7, 7]))
 
         # Test MobileNetv3 forward with GroupNorm
-        model = ViPNAS_MobileNetV3(
-            norm_cfg=dict(type='GN', num_groups=2, requires_grad=True))
+        model = ViPNAS_MobileNetV3(norm_cfg=dict(type="GN", num_groups=2, requires_grad=True))
         for m in model.modules():
             if self.is_norm(m):
                 self.assertIsInstance(m, GroupNorm)

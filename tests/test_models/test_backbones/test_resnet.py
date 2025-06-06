@@ -7,8 +7,7 @@ from mmcv.cnn import ConvModule
 from mmengine.utils.dl_utils.parrots_wrapper import _BatchNorm
 
 from mmpose.models.backbones import ResNet, ResNetV1d
-from mmpose.models.backbones.resnet import (BasicBlock, Bottleneck, ResLayer,
-                                            get_expansion)
+from mmpose.models.backbones.resnet import BasicBlock, Bottleneck, ResLayer, get_expansion
 
 
 class TestResnet(TestCase):
@@ -23,11 +22,9 @@ class TestResnet(TestCase):
     @staticmethod
     def all_zeros(modules):
         """Check if the weight(and bias) is all zero."""
-        weight_zero = torch.equal(modules.weight.data,
-                                  torch.zeros_like(modules.weight.data))
-        if hasattr(modules, 'bias'):
-            bias_zero = torch.equal(modules.bias.data,
-                                    torch.zeros_like(modules.bias.data))
+        weight_zero = torch.equal(modules.weight.data, torch.zeros_like(modules.weight.data))
+        if hasattr(modules, "bias"):
+            bias_zero = torch.equal(modules.bias.data, torch.zeros_like(modules.bias.data))
         else:
             bias_zero = True
 
@@ -55,7 +52,7 @@ class TestResnet(TestCase):
 
         # expansion must be an integer or None
         with self.assertRaises(TypeError):
-            get_expansion(Bottleneck, '0')
+            get_expansion(Bottleneck, "0")
 
         # expansion is not specified and cannot be inferred
         with self.assertRaises(TypeError):
@@ -87,8 +84,7 @@ class TestResnet(TestCase):
         self.assertEqual(x_out.shape, torch.Size([1, 64, 56, 56]))
 
         # BasicBlock with stride 1 and downsample
-        downsample = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=1, bias=False), nn.BatchNorm2d(128))
+        downsample = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1, bias=False), nn.BatchNorm2d(128))
         block = BasicBlock(64, 128, downsample=downsample)
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 128)
@@ -105,9 +101,7 @@ class TestResnet(TestCase):
         self.assertEqual(x_out.shape, torch.Size([1, 128, 56, 56]))
 
         # BasicBlock with stride 2 and downsample
-        downsample = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=1, stride=2, bias=False),
-            nn.BatchNorm2d(128))
+        downsample = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1, stride=2, bias=False), nn.BatchNorm2d(128))
         block = BasicBlock(64, 128, stride=2, downsample=downsample)
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 128)
@@ -133,22 +127,22 @@ class TestResnet(TestCase):
     def test_bottleneck(self):
         # style must be in ['pytorch', 'caffe']
         with self.assertRaises(AssertionError):
-            Bottleneck(64, 64, style='tensorflow')
+            Bottleneck(64, 64, style="tensorflow")
 
         # expansion must be divisible by out_channels
         with self.assertRaises(AssertionError):
             Bottleneck(64, 64, expansion=3)
 
         # Test Bottleneck style
-        block = Bottleneck(64, 64, stride=2, style='pytorch')
+        block = Bottleneck(64, 64, stride=2, style="pytorch")
         self.assertEqual(block.conv1.stride, (1, 1))
         self.assertEqual(block.conv2.stride, (2, 2))
-        block = Bottleneck(64, 64, stride=2, style='caffe')
+        block = Bottleneck(64, 64, stride=2, style="caffe")
         self.assertEqual(block.conv1.stride, (2, 2))
         self.assertEqual(block.conv2.stride, (1, 1))
 
         # Bottleneck with stride 1
-        block = Bottleneck(64, 64, style='pytorch')
+        block = Bottleneck(64, 64, style="pytorch")
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 16)
         self.assertEqual(block.out_channels, 64)
@@ -166,9 +160,8 @@ class TestResnet(TestCase):
         self.assertEqual(x_out.shape, (1, 64, 56, 56))
 
         # Bottleneck with stride 1 and downsample
-        downsample = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=1), nn.BatchNorm2d(128))
-        block = Bottleneck(64, 128, style='pytorch', downsample=downsample)
+        downsample = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1), nn.BatchNorm2d(128))
+        block = Bottleneck(64, 128, style="pytorch", downsample=downsample)
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 32)
         self.assertEqual(block.out_channels, 128)
@@ -186,16 +179,14 @@ class TestResnet(TestCase):
         self.assertEqual(x_out.shape, (1, 128, 56, 56))
 
         # Bottleneck with stride 2 and downsample
-        downsample = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=1, stride=2), nn.BatchNorm2d(128))
-        block = Bottleneck(
-            64, 128, stride=2, style='pytorch', downsample=downsample)
+        downsample = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1, stride=2), nn.BatchNorm2d(128))
+        block = Bottleneck(64, 128, stride=2, style="pytorch", downsample=downsample)
         x = torch.randn(1, 64, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, (1, 128, 28, 28))
 
         # Bottleneck with expansion 2
-        block = Bottleneck(64, 64, style='pytorch', expansion=2)
+        block = Bottleneck(64, 64, style="pytorch", expansion=2)
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 32)
         self.assertEqual(block.out_channels, 64)
@@ -237,8 +228,7 @@ class TestResnet(TestCase):
         self.assertEqual(len(layer), 3)
         self.assertEqual(layer[0].in_channels, 32)
         self.assertEqual(layer[0].out_channels, 64)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 2)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 2)
         self.assertIsInstance(layer[0].downsample[0], nn.Conv2d)
         self.assertEqual(layer[0].downsample[0].stride, (1, 1))
         for i in range(1, 3):
@@ -255,8 +245,7 @@ class TestResnet(TestCase):
         self.assertEqual(layer[0].in_channels, 32)
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 2)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 2)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 2)
         self.assertIsInstance(layer[0].downsample[0], nn.Conv2d)
         self.assertEqual(layer[0].downsample[0].stride, (2, 2))
         for i in range(1, 3):
@@ -274,8 +263,7 @@ class TestResnet(TestCase):
         self.assertEqual(layer[0].in_channels, 32)
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 2)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 3)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 3)
         self.assertIsInstance(layer[0].downsample[0], nn.AvgPool2d)
         self.assertEqual(layer[0].downsample[0].stride, 2)
         for i in range(1, 3):
@@ -306,8 +294,7 @@ class TestResnet(TestCase):
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 1)
         self.assertEqual(layer[0].conv1.out_channels, 16)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 2)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 2)
         self.assertIsInstance(layer[0].downsample[0], nn.Conv2d)
         self.assertEqual(layer[0].downsample[0].stride, (1, 1))
         for i in range(1, 3):
@@ -327,8 +314,7 @@ class TestResnet(TestCase):
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 2)
         self.assertEqual(layer[0].conv1.out_channels, 16)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 2)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 2)
         self.assertIsInstance(layer[0].downsample[0], nn.Conv2d)
         self.assertEqual(layer[0].downsample[0].stride, (2, 2))
         for i in range(1, 3):
@@ -348,8 +334,7 @@ class TestResnet(TestCase):
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 2)
         self.assertEqual(layer[0].conv1.out_channels, 16)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 3)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 3)
         self.assertIsInstance(layer[0].downsample[0], nn.AvgPool2d)
         self.assertEqual(layer[0].downsample[0].stride, 2)
         for i in range(1, 3):
@@ -391,11 +376,11 @@ class TestResnet(TestCase):
 
         with self.assertRaises(AssertionError):
             # len(strides) == len(dilations) == num_stages
-            ResNet(50, strides=(1, ), dilations=(1, 1), num_stages=3)
+            ResNet(50, strides=(1,), dilations=(1, 1), num_stages=3)
 
         with self.assertRaises(AssertionError):
             # Style must be in ['pytorch', 'caffe']
-            ResNet(50, style='tensorflow')
+            ResNet(50, style="tensorflow")
 
         # Test ResNet50 norm_eval=True
         model = ResNet(50, norm_eval=True)
@@ -404,7 +389,7 @@ class TestResnet(TestCase):
         self.assertTrue(self.check_norm_state(model.modules(), False))
 
         # Test ResNet50 with torchvision pretrained weight
-        init_cfg = dict(type='Pretrained', checkpoint='torchvision://resnet50')
+        init_cfg = dict(type="Pretrained", checkpoint="torchvision://resnet50")
         model = ResNet(depth=50, norm_eval=True, init_cfg=init_cfg)
         model.train()
         self.assertTrue(self.check_norm_state(model.modules(), False))
@@ -419,7 +404,7 @@ class TestResnet(TestCase):
             for param in layer.parameters():
                 self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -465,7 +450,7 @@ class TestResnet(TestCase):
         self.assertEqual(feat[2].shape, (1, 1024, 14, 14))
 
         # Test ResNet50 with layers 3 (top feature maps) out forward
-        model = ResNet(50, out_indices=(3, ))
+        model = ResNet(50, out_indices=(3,))
         model.init_weights()
         model.train()
 
@@ -539,7 +524,7 @@ class TestResnet(TestCase):
         for param in model.stem.parameters():
             self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
