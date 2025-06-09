@@ -13,9 +13,12 @@ class TestCPM(TestCase):
         with self.assertRaises(AssertionError):
             # len(channels) == len(kernels)
             CpmBlock(
-                3, channels=[3, 3, 3], kernels=[
+                3,
+                channels=[3, 3, 3],
+                kernels=[
                     1,
-                ])
+                ],
+            )
 
         # Test CPM Block
         model = CpmBlock(3, channels=[3, 3, 3], kernels=[1, 1, 1])

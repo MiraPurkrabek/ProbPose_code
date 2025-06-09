@@ -30,12 +30,14 @@ class Mlp(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 in_features: int,
-                 hidden_features: int = None,
-                 out_features: int = None,
-                 drop_rate: float = 0.,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features: int = None,
+        out_features: int = None,
+        drop_rate: float = 0.0,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -65,12 +67,14 @@ class CMlp(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 in_features: int,
-                 hidden_features: int = None,
-                 out_features: int = None,
-                 drop_rate: float = 0.,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features: int = None,
+        out_features: int = None,
+        drop_rate: float = 0.0,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -101,36 +105,32 @@ class CBlock(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 embed_dim: int,
-                 mlp_ratio: float = 4.,
-                 drop_rate: float = 0.,
-                 drop_path_rate: float = 0.,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        embed_dim: int,
+        mlp_ratio: float = 4.0,
+        drop_rate: float = 0.0,
+        drop_path_rate: float = 0.0,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
-        self.pos_embed = nn.Conv2d(
-            embed_dim, embed_dim, 3, padding=1, groups=embed_dim)
+        self.pos_embed = nn.Conv2d(embed_dim, embed_dim, 3, padding=1, groups=embed_dim)
         self.norm1 = nn.BatchNorm2d(embed_dim)
         self.conv1 = nn.Conv2d(embed_dim, embed_dim, 1)
         self.conv2 = nn.Conv2d(embed_dim, embed_dim, 1)
-        self.attn = nn.Conv2d(
-            embed_dim, embed_dim, 5, padding=2, groups=embed_dim)
+        self.attn = nn.Conv2d(embed_dim, embed_dim, 5, padding=2, groups=embed_dim)
         # NOTE: drop path for stochastic depth, we shall see if this is
         # better than dropout here
-        self.drop_path = build_dropout(
-            dict(type='DropPath', drop_prob=drop_path_rate)
-        ) if drop_path_rate > 0. else nn.Identity()
+        self.drop_path = (
+            build_dropout(dict(type="DropPath", drop_prob=drop_path_rate)) if drop_path_rate > 0.0 else nn.Identity()
+        )
         self.norm2 = nn.BatchNorm2d(embed_dim)
         mlp_hidden_dim = int(embed_dim * mlp_ratio)
-        self.mlp = CMlp(
-            in_features=embed_dim,
-            hidden_features=mlp_hidden_dim,
-            drop_rate=drop_rate)
+        self.mlp = CMlp(in_features=embed_dim, hidden_features=mlp_hidden_dim, drop_rate=drop_rate)
 
     def forward(self, x):
         x = x + self.pos_embed(x)
-        x = x + self.drop_path(
-            self.conv2(self.attn(self.conv1(self.norm1(x)))))
+        x = x + self.drop_path(self.conv2(self.attn(self.conv1(self.norm1(x)))))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
 
@@ -156,14 +156,16 @@ class Attention(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 embed_dim: int,
-                 num_heads: int = 8,
-                 qkv_bias: bool = True,
-                 qk_scale: float = None,
-                 attn_drop_rate: float = 0.,
-                 proj_drop_rate: float = 0.,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        embed_dim: int,
+        num_heads: int = 8,
+        qkv_bias: bool = True,
+        qk_scale: float = None,
+        attn_drop_rate: float = 0.0,
+        proj_drop_rate: float = 0.0,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
         self.num_heads = num_heads
         head_dim = embed_dim // num_heads
@@ -178,10 +180,8 @@ class Attention(BaseModule):
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads,
-                                  C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[
-            2]  # make torchscript happy (cannot use tensor as tuple)
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
@@ -209,23 +209,23 @@ class PatchEmbed(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 img_size: int = 224,
-                 patch_size: int = 16,
-                 in_channels: int = 3,
-                 embed_dim: int = 768,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        img_size: int = 224,
+        patch_size: int = 16,
+        in_channels: int = 3,
+        embed_dim: int = 768,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
-        num_patches = (img_size[1] // patch_size[1]) * (
-            img_size[0] // patch_size[0])
+        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
         self.img_size = img_size
         self.patch_size = patch_size
         self.num_patches = num_patches
         self.norm = nn.LayerNorm(embed_dim)
-        self.proj = nn.Conv2d(
-            in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
 
     def forward(self, x):
         B, _, H, W = x.shape
@@ -257,20 +257,21 @@ class SABlock(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 embed_dim: int,
-                 num_heads: int,
-                 mlp_ratio: float = 4.,
-                 qkv_bias: bool = False,
-                 qk_scale: float = None,
-                 drop_rate: float = 0.,
-                 attn_drop_rate: float = 0.,
-                 drop_path_rate: float = 0.,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        embed_dim: int,
+        num_heads: int,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = False,
+        qk_scale: float = None,
+        drop_rate: float = 0.0,
+        attn_drop_rate: float = 0.0,
+        drop_path_rate: float = 0.0,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
 
-        self.pos_embed = nn.Conv2d(
-            embed_dim, embed_dim, 3, padding=1, groups=embed_dim)
+        self.pos_embed = nn.Conv2d(embed_dim, embed_dim, 3, padding=1, groups=embed_dim)
         self.norm1 = nn.LayerNorm(embed_dim)
         self.attn = Attention(
             embed_dim,
@@ -278,18 +279,16 @@ class SABlock(BaseModule):
             qkv_bias=qkv_bias,
             qk_scale=qk_scale,
             attn_drop_rate=attn_drop_rate,
-            proj_drop_rate=drop_rate)
+            proj_drop_rate=drop_rate,
+        )
         # NOTE: drop path for stochastic depth,
         # we shall see if this is better than dropout here
-        self.drop_path = build_dropout(
-            dict(type='DropPath', drop_prob=drop_path_rate)
-        ) if drop_path_rate > 0. else nn.Identity()
+        self.drop_path = (
+            build_dropout(dict(type="DropPath", drop_prob=drop_path_rate)) if drop_path_rate > 0.0 else nn.Identity()
+        )
         self.norm2 = nn.LayerNorm(embed_dim)
         mlp_hidden_dim = int(embed_dim * mlp_ratio)
-        self.mlp = Mlp(
-            in_features=embed_dim,
-            hidden_features=mlp_hidden_dim,
-            drop_rate=drop_rate)
+        self.mlp = Mlp(in_features=embed_dim, hidden_features=mlp_hidden_dim, drop_rate=drop_rate)
 
     def forward(self, x):
         x = x + self.pos_embed(x)
@@ -322,21 +321,22 @@ class WindowSABlock(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 embed_dim: int,
-                 num_heads: int,
-                 window_size: int = 14,
-                 mlp_ratio: float = 4.,
-                 qkv_bias: bool = False,
-                 qk_scale: float = None,
-                 drop_rate: float = 0.,
-                 attn_drop_rate: float = 0.,
-                 drop_path_rate: float = 0.,
-                 init_cfg: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        embed_dim: int,
+        num_heads: int,
+        window_size: int = 14,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = False,
+        qk_scale: float = None,
+        drop_rate: float = 0.0,
+        attn_drop_rate: float = 0.0,
+        drop_path_rate: float = 0.0,
+        init_cfg: Optional[dict] = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
         self.windows_size = window_size
-        self.pos_embed = nn.Conv2d(
-            embed_dim, embed_dim, 3, padding=1, groups=embed_dim)
+        self.pos_embed = nn.Conv2d(embed_dim, embed_dim, 3, padding=1, groups=embed_dim)
         self.norm1 = nn.LayerNorm(embed_dim)
         self.attn = Attention(
             embed_dim,
@@ -344,19 +344,17 @@ class WindowSABlock(BaseModule):
             qkv_bias=qkv_bias,
             qk_scale=qk_scale,
             attn_drop_rate=attn_drop_rate,
-            proj_drop_rate=drop_rate)
+            proj_drop_rate=drop_rate,
+        )
         # NOTE: drop path for stochastic depth,
         # we shall see if this is better than dropout here
-        self.drop_path = build_dropout(
-            dict(type='DropPath', drop_prob=drop_path_rate)
-        ) if drop_path_rate > 0. else nn.Identity()
+        self.drop_path = (
+            build_dropout(dict(type="DropPath", drop_prob=drop_path_rate)) if drop_path_rate > 0.0 else nn.Identity()
+        )
         # self.norm2 = build_dropout(norm_cfg, embed_dims)[1]
         self.norm2 = nn.LayerNorm(embed_dim)
         mlp_hidden_dim = int(embed_dim * mlp_ratio)
-        self.mlp = Mlp(
-            in_features=embed_dim,
-            hidden_features=mlp_hidden_dim,
-            drop_rate=drop_rate)
+        self.mlp = Mlp(in_features=embed_dim, hidden_features=mlp_hidden_dim, drop_rate=drop_rate)
 
     def window_reverse(self, windows, H, W):
         """
@@ -369,8 +367,7 @@ class WindowSABlock(BaseModule):
         """
         window_size = self.window_size
         B = int(windows.shape[0] / (H * W / window_size / window_size))
-        x = windows.view(B, H // window_size, W // window_size, window_size,
-                         window_size, -1)
+        x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
         x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
         return x
 
@@ -383,11 +380,8 @@ class WindowSABlock(BaseModule):
         """
         B, H, W, C = x.shape
         window_size = self.window_size
-        x = x.view(B, H // window_size, window_size, W // window_size,
-                   window_size, C)
-        windows = x.permute(0, 1, 3, 2, 4,
-                            5).contiguous().view(-1, window_size, window_size,
-                                                 C)
+        x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
+        windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
         return windows
 
     def forward(self, x):
@@ -403,17 +397,14 @@ class WindowSABlock(BaseModule):
         x = F.pad(x, (0, 0, pad_l, pad_r, pad_t, pad_b))
         _, H_pad, W_pad, _ = x.shape
 
-        x_windows = self.window_partition(
-            x)  # nW*B, window_size, window_size, C
-        x_windows = x_windows.view(-1, self.window_size * self.window_size,
-                                   C)  # nW*B, window_size*window_size, C
+        x_windows = self.window_partition(x)  # nW*B, window_size, window_size, C
+        x_windows = x_windows.view(-1, self.window_size * self.window_size, C)  # nW*B, window_size*window_size, C
 
         # W-MSA/SW-MSA
         attn_windows = self.attn(x_windows)  # nW*B, window_size*window_size, C
 
         # merge windows
-        attn_windows = attn_windows.view(-1, self.window_size,
-                                         self.window_size, C)
+        attn_windows = attn_windows.view(-1, self.window_size, self.window_size, C)
         x = self.window_reverse(attn_windows, H_pad, W_pad)  # B H' W' C
 
         # reverse cyclic shift
@@ -473,13 +464,13 @@ class UniFormer(BaseBackbone):
         num_classes: int = 80,
         embed_dims: List[int] = [64, 128, 320, 512],
         head_dim: int = 64,
-        mlp_ratio: int = 4.,
+        mlp_ratio: int = 4.0,
         qkv_bias: bool = True,
         qk_scale: float = None,
         representation_size: Optional[int] = None,
-        drop_rate: float = 0.,
-        attn_drop_rate: float = 0.,
-        drop_path_rate: float = 0.,
+        drop_rate: float = 0.0,
+        attn_drop_rate: float = 0.0,
+        drop_path_rate: float = 0.0,
         norm_layer=partial(nn.LayerNorm, eps=1e-6),
         use_checkpoint: bool = False,
         checkpoint_num=(0, 0, 0, 0),
@@ -487,9 +478,9 @@ class UniFormer(BaseBackbone):
         use_hybrid: bool = False,
         window_size: int = 14,
         init_cfg: Optional[Union[Dict, List[Dict]]] = [
-            dict(type='TruncNormal', layer='Linear', std=0.02, bias=0.),
-            dict(type='Constant', layer='LayerNorm', val=1., bias=0.)
-        ]
+            dict(type="TruncNormal", layer="Linear", std=0.02, bias=0.0),
+            dict(type="Constant", layer="LayerNorm", val=1.0, bias=0.0),
+        ],
     ) -> None:
         super(UniFormer, self).__init__(init_cfg=init_cfg)
 
@@ -498,71 +489,63 @@ class UniFormer(BaseBackbone):
         self.checkpoint_num = checkpoint_num
         self.use_window = use_window
         self.logger = get_root_logger()
-        self.logger.info(f'Use torch.utils.checkpoint: {self.use_checkpoint}')
-        self.logger.info(
-            f'torch.utils.checkpoint number: {self.checkpoint_num}')
+        self.logger.info(f"Use torch.utils.checkpoint: {self.use_checkpoint}")
+        self.logger.info(f"torch.utils.checkpoint number: {self.checkpoint_num}")
         self.num_features = self.embed_dims = embed_dims
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
 
         self.patch_embed1 = PatchEmbed(
-            img_size=img_size,
-            patch_size=4,
-            in_channels=in_channels,
-            embed_dim=embed_dims[0])
+            img_size=img_size, patch_size=4, in_channels=in_channels, embed_dim=embed_dims[0]
+        )
         self.patch_embed2 = PatchEmbed(
-            img_size=img_size // 4,
-            patch_size=2,
-            in_channels=embed_dims[0],
-            embed_dim=embed_dims[1])
+            img_size=img_size // 4, patch_size=2, in_channels=embed_dims[0], embed_dim=embed_dims[1]
+        )
         self.patch_embed3 = PatchEmbed(
-            img_size=img_size // 8,
-            patch_size=2,
-            in_channels=embed_dims[1],
-            embed_dim=embed_dims[2])
+            img_size=img_size // 8, patch_size=2, in_channels=embed_dims[1], embed_dim=embed_dims[2]
+        )
         self.patch_embed4 = PatchEmbed(
-            img_size=img_size // 16,
-            patch_size=2,
-            in_channels=embed_dims[2],
-            embed_dim=embed_dims[3])
+            img_size=img_size // 16, patch_size=2, in_channels=embed_dims[2], embed_dim=embed_dims[3]
+        )
 
         self.drop_after_pos = nn.Dropout(drop_rate)
-        dpr = [
-            x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))
-        ]  # stochastic depth decay rule
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
         num_heads = [dim // head_dim for dim in embed_dims]
-        self.blocks1 = nn.ModuleList([
-            CBlock(
-                embed_dim=embed_dims[0],
-                mlp_ratio=mlp_ratio,
-                drop_rate=drop_rate,
-                drop_path_rate=dpr[i]) for i in range(depths[0])
-        ])
+        self.blocks1 = nn.ModuleList(
+            [
+                CBlock(embed_dim=embed_dims[0], mlp_ratio=mlp_ratio, drop_rate=drop_rate, drop_path_rate=dpr[i])
+                for i in range(depths[0])
+            ]
+        )
         self.norm1 = norm_layer(embed_dims[0])
-        self.blocks2 = nn.ModuleList([
-            CBlock(
-                embed_dim=embed_dims[1],
-                mlp_ratio=mlp_ratio,
-                drop_rate=drop_rate,
-                drop_path_rate=dpr[i + depths[0]]) for i in range(depths[1])
-        ])
+        self.blocks2 = nn.ModuleList(
+            [
+                CBlock(
+                    embed_dim=embed_dims[1], mlp_ratio=mlp_ratio, drop_rate=drop_rate, drop_path_rate=dpr[i + depths[0]]
+                )
+                for i in range(depths[1])
+            ]
+        )
         self.norm2 = norm_layer(embed_dims[1])
         if self.use_window:
-            self.logger.info('Use local window for all blocks in stage3')
-            self.blocks3 = nn.ModuleList([
-                WindowSABlock(
-                    embed_dim=embed_dims[2],
-                    num_heads=num_heads[2],
-                    window_size=window_size,
-                    mlp_ratio=mlp_ratio,
-                    qkv_bias=qkv_bias,
-                    qk_scale=qk_scale,
-                    drop_rate=drop_rate,
-                    attn_drop_rate=attn_drop_rate,
-                    drop_path_rate=dpr[i + depths[0] + depths[1]])
-                for i in range(depths[2])
-            ])
+            self.logger.info("Use local window for all blocks in stage3")
+            self.blocks3 = nn.ModuleList(
+                [
+                    WindowSABlock(
+                        embed_dim=embed_dims[2],
+                        num_heads=num_heads[2],
+                        window_size=window_size,
+                        mlp_ratio=mlp_ratio,
+                        qkv_bias=qkv_bias,
+                        qk_scale=qk_scale,
+                        drop_rate=drop_rate,
+                        attn_drop_rate=attn_drop_rate,
+                        drop_path_rate=dpr[i + depths[0] + depths[1]],
+                    )
+                    for i in range(depths[2])
+                ]
+            )
         elif use_hybrid:
-            self.logger.info('Use hybrid window for blocks in stage3')
+            self.logger.info("Use hybrid window for blocks in stage3")
             block3 = []
             for i in range(depths[2]):
                 if (i + 1) % 4 == 0:
@@ -575,7 +558,9 @@ class UniFormer(BaseBackbone):
                             qk_scale=qk_scale,
                             drop_rate=drop_rate,
                             attn_drop_rate=attn_drop_rate,
-                            drop_path_rate=dpr[i + depths[0] + depths[1]]))
+                            drop_path_rate=dpr[i + depths[0] + depths[1]],
+                        )
+                    )
                 else:
                     block3.append(
                         WindowSABlock(
@@ -587,44 +572,51 @@ class UniFormer(BaseBackbone):
                             qk_scale=qk_scale,
                             drop_rate=drop_rate,
                             attn_drop_rate=attn_drop_rate,
-                            drop_path_rate=dpr[i + depths[0] + depths[1]]))
+                            drop_path_rate=dpr[i + depths[0] + depths[1]],
+                        )
+                    )
             self.blocks3 = nn.ModuleList(block3)
         else:
-            self.logger.info('Use global window for all blocks in stage3')
-            self.blocks3 = nn.ModuleList([
+            self.logger.info("Use global window for all blocks in stage3")
+            self.blocks3 = nn.ModuleList(
+                [
+                    SABlock(
+                        embed_dim=embed_dims[2],
+                        num_heads=num_heads[2],
+                        mlp_ratio=mlp_ratio,
+                        qkv_bias=qkv_bias,
+                        qk_scale=qk_scale,
+                        drop_rate=drop_rate,
+                        attn_drop_rate=attn_drop_rate,
+                        drop_path_rate=dpr[i + depths[0] + depths[1]],
+                    )
+                    for i in range(depths[2])
+                ]
+            )
+        self.norm3 = norm_layer(embed_dims[2])
+        self.blocks4 = nn.ModuleList(
+            [
                 SABlock(
-                    embed_dim=embed_dims[2],
-                    num_heads=num_heads[2],
+                    embed_dim=embed_dims[3],
+                    num_heads=num_heads[3],
                     mlp_ratio=mlp_ratio,
                     qkv_bias=qkv_bias,
                     qk_scale=qk_scale,
                     drop_rate=drop_rate,
                     attn_drop_rate=attn_drop_rate,
-                    drop_path_rate=dpr[i + depths[0] + depths[1]])
-                for i in range(depths[2])
-            ])
-        self.norm3 = norm_layer(embed_dims[2])
-        self.blocks4 = nn.ModuleList([
-            SABlock(
-                embed_dim=embed_dims[3],
-                num_heads=num_heads[3],
-                mlp_ratio=mlp_ratio,
-                qkv_bias=qkv_bias,
-                qk_scale=qk_scale,
-                drop_rate=drop_rate,
-                attn_drop_rate=attn_drop_rate,
-                drop_path_rate=dpr[i + depths[0] + depths[1] + depths[2]])
-            for i in range(depths[3])
-        ])
+                    drop_path_rate=dpr[i + depths[0] + depths[1] + depths[2]],
+                )
+                for i in range(depths[3])
+            ]
+        )
         self.norm4 = norm_layer(embed_dims[3])
 
         # Representation layer
         if representation_size:
             self.num_features = representation_size
             self.pre_logits = nn.Sequential(
-                OrderedDict([('fc', nn.Linear(embed_dims,
-                                              representation_size)),
-                             ('act', nn.Tanh())]))
+                OrderedDict([("fc", nn.Linear(embed_dims, representation_size)), ("act", nn.Tanh())])
+            )
         else:
             self.pre_logits = nn.Identity()
 
@@ -638,20 +630,14 @@ class UniFormer(BaseBackbone):
             pretrained (str, optional): Path to pre-trained weights.
                 Defaults to None.
         """
-        if (isinstance(self.init_cfg, dict)
-                and self.init_cfg['type'] == 'Pretrained'):
-            pretrained = self.init_cfg['checkpoint']
-            load_checkpoint(
-                self,
-                pretrained,
-                map_location='cpu',
-                strict=False,
-                logger=self.logger)
-            self.logger.info(f'Load pretrained model from {pretrained}')
+        if isinstance(self.init_cfg, dict) and self.init_cfg["type"] == "Pretrained":
+            pretrained = self.init_cfg["checkpoint"]
+            load_checkpoint(self, pretrained, map_location="cpu", strict=False, logger=self.logger)
+            self.logger.info(f"Load pretrained model from {pretrained}")
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
-            trunc_normal_(m.weight, std=.02)
+            trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
                 nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.LayerNorm):
@@ -660,16 +646,14 @@ class UniFormer(BaseBackbone):
 
     @torch.jit.ignore
     def no_weight_decay(self):
-        return {'pos_embed', 'cls_token'}
+        return {"pos_embed", "cls_token"}
 
     def get_classifier(self):
         return self.head
 
-    def reset_classifier(self, num_classes, global_pool=''):
+    def reset_classifier(self, num_classes, global_pool=""):
         self.num_classes = num_classes
-        self.head = nn.Linear(
-            self.embed_dims,
-            num_classes) if num_classes > 0 else nn.Identity()
+        self.head = nn.Linear(self.embed_dims, num_classes) if num_classes > 0 else nn.Identity()
 
     def forward(self, x):
         out = []

@@ -11,34 +11,33 @@ class TestCombinedDataset(TestCase):
     def build_combined_dataset(self, **kwargs):
 
         coco_cfg = dict(
-            type='CocoDataset',
-            ann_file='test_coco.json',
+            type="CocoDataset",
+            ann_file="test_coco.json",
             bbox_file=None,
-            data_mode='topdown',
-            data_root='tests/data/coco',
+            data_mode="topdown",
+            data_root="tests/data/coco",
             pipeline=[],
-            test_mode=False)
+            test_mode=False,
+        )
 
         aic_cfg = dict(
-            type='AicDataset',
-            ann_file='test_aic.json',
+            type="AicDataset",
+            ann_file="test_aic.json",
             bbox_file=None,
-            data_mode='topdown',
-            data_root='tests/data/aic',
+            data_mode="topdown",
+            data_root="tests/data/aic",
             pipeline=[],
-            test_mode=False)
+            test_mode=False,
+        )
 
         cfg = dict(
-            metainfo=dict(from_file='configs/_base_/datasets/coco.py'),
-            datasets=[coco_cfg, aic_cfg],
-            pipeline=[])
+            metainfo=dict(from_file="configs/_base_/datasets/coco.py"), datasets=[coco_cfg, aic_cfg], pipeline=[]
+        )
         cfg.update(kwargs)
         return CombinedDataset(**cfg)
 
-    def check_data_info_keys(self,
-                             data_info: dict,
-                             data_mode: str = 'topdown'):
-        if data_mode == 'topdown':
+    def check_data_info_keys(self, data_info: dict, data_mode: str = "topdown"):
+        if data_mode == "topdown":
             expected_keys = dict(
                 img_id=int,
                 img_path=str,
@@ -46,8 +45,9 @@ class TestCombinedDataset(TestCase):
                 bbox_score=np.ndarray,
                 keypoints=np.ndarray,
                 keypoints_visible=np.ndarray,
-                id=int)
-        elif data_mode == 'bottomup':
+                id=int,
+            )
+        elif data_mode == "bottomup":
             expected_keys = dict(
                 img_id=int,
                 img_path=str,
@@ -56,9 +56,10 @@ class TestCombinedDataset(TestCase):
                 keypoints=np.ndarray,
                 keypoints_visible=np.ndarray,
                 invalid_segs=list,
-                id=list)
+                id=list,
+            )
         else:
-            raise ValueError(f'Invalid data_mode {data_mode}')
+            raise ValueError(f"Invalid data_mode {data_mode}")
 
         for key, type_ in expected_keys.items():
             self.assertIn(key, data_info)
@@ -83,9 +84,7 @@ class TestCombinedDataset(TestCase):
 
         # combiend dataset with resampling ratio
         dataset = self.build_combined_dataset(sample_ratio_factor=[1, 0.3])
-        self.assertEqual(
-            len(dataset),
-            len(dataset.datasets[0]) + round(0.3 * len(dataset.datasets[1])))
+        self.assertEqual(len(dataset), len(dataset.datasets[0]) + round(0.3 * len(dataset.datasets[1])))
         lens = dataset._lens
 
         index = lens[0]

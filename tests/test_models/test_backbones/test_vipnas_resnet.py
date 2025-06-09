@@ -6,9 +6,7 @@ import torch.nn as nn
 from mmengine.utils.dl_utils.parrots_wrapper import _BatchNorm
 
 from mmpose.models.backbones import ViPNAS_ResNet
-from mmpose.models.backbones.vipnas_resnet import (ViPNAS_Bottleneck,
-                                                   ViPNAS_ResLayer,
-                                                   get_expansion)
+from mmpose.models.backbones.vipnas_resnet import ViPNAS_Bottleneck, ViPNAS_ResLayer, get_expansion
 
 
 class TestVipnasResnet(TestCase):
@@ -23,11 +21,9 @@ class TestVipnasResnet(TestCase):
     @staticmethod
     def all_zeros(modules):
         """Check if the weight(and bias) is all zero."""
-        weight_zero = torch.equal(modules.weight.data,
-                                  torch.zeros_like(modules.weight.data))
-        if hasattr(modules, 'bias'):
-            bias_zero = torch.equal(modules.bias.data,
-                                    torch.zeros_like(modules.bias.data))
+        weight_zero = torch.equal(modules.weight.data, torch.zeros_like(modules.weight.data))
+        if hasattr(modules, "bias"):
+            bias_zero = torch.equal(modules.bias.data, torch.zeros_like(modules.bias.data))
         else:
             bias_zero = True
 
@@ -54,7 +50,7 @@ class TestVipnasResnet(TestCase):
 
         # expansion must be an integer or None
         with self.assertRaises(TypeError):
-            get_expansion(ViPNAS_Bottleneck, '0')
+            get_expansion(ViPNAS_Bottleneck, "0")
 
         # expansion is not specified and cannot be inferred
         with self.assertRaises(TypeError):
@@ -67,22 +63,22 @@ class TestVipnasResnet(TestCase):
     def test_vipnas_bottleneck(self):
         # style must be in ['pytorch', 'caffe']
         with self.assertRaises(AssertionError):
-            ViPNAS_Bottleneck(64, 64, style='tensorflow')
+            ViPNAS_Bottleneck(64, 64, style="tensorflow")
 
         # expansion must be divisible by out_channels
         with self.assertRaises(AssertionError):
             ViPNAS_Bottleneck(64, 64, expansion=3)
 
         # Test ViPNAS_Bottleneck style
-        block = ViPNAS_Bottleneck(64, 64, stride=2, style='pytorch')
+        block = ViPNAS_Bottleneck(64, 64, stride=2, style="pytorch")
         self.assertEqual(block.conv1.stride, (1, 1))
         self.assertEqual(block.conv2.stride, (2, 2))
-        block = ViPNAS_Bottleneck(64, 64, stride=2, style='caffe')
+        block = ViPNAS_Bottleneck(64, 64, stride=2, style="caffe")
         self.assertEqual(block.conv1.stride, (2, 2))
         self.assertEqual(block.conv2.stride, (1, 1))
 
         # ViPNAS_Bottleneck with stride 1
-        block = ViPNAS_Bottleneck(64, 64, style='pytorch')
+        block = ViPNAS_Bottleneck(64, 64, style="pytorch")
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 16)
         self.assertEqual(block.out_channels, 64)
@@ -100,10 +96,8 @@ class TestVipnasResnet(TestCase):
         self.assertEqual(x_out.shape, (1, 64, 56, 56))
 
         # ViPNAS_Bottleneck with stride 1 and downsample
-        downsample = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=1), nn.BatchNorm2d(128))
-        block = ViPNAS_Bottleneck(
-            64, 128, style='pytorch', downsample=downsample)
+        downsample = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1), nn.BatchNorm2d(128))
+        block = ViPNAS_Bottleneck(64, 128, style="pytorch", downsample=downsample)
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 32)
         self.assertEqual(block.out_channels, 128)
@@ -121,16 +115,14 @@ class TestVipnasResnet(TestCase):
         self.assertEqual(x_out.shape, (1, 128, 56, 56))
 
         # ViPNAS_Bottleneck with stride 2 and downsample
-        downsample = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=1, stride=2), nn.BatchNorm2d(128))
-        block = ViPNAS_Bottleneck(
-            64, 128, stride=2, style='pytorch', downsample=downsample)
+        downsample = nn.Sequential(nn.Conv2d(64, 128, kernel_size=1, stride=2), nn.BatchNorm2d(128))
+        block = ViPNAS_Bottleneck(64, 128, stride=2, style="pytorch", downsample=downsample)
         x = torch.randn(1, 64, 56, 56)
         x_out = block(x)
         self.assertEqual(x_out.shape, (1, 128, 28, 28))
 
         # ViPNAS_Bottleneck with expansion 2
-        block = ViPNAS_Bottleneck(64, 64, style='pytorch', expansion=2)
+        block = ViPNAS_Bottleneck(64, 64, style="pytorch", expansion=2)
         self.assertEqual(block.in_channels, 64)
         self.assertEqual(block.mid_channels, 32)
         self.assertEqual(block.out_channels, 64)
@@ -174,8 +166,7 @@ class TestVipnasResnet(TestCase):
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 1)
         self.assertEqual(layer[0].conv1.out_channels, 64)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 2)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 2)
         self.assertIsInstance(layer[0].downsample[0], nn.Conv2d)
         self.assertEqual(layer[0].downsample[0].stride, (1, 1))
         for i in range(1, 3):
@@ -195,8 +186,7 @@ class TestVipnasResnet(TestCase):
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 2)
         self.assertEqual(layer[0].conv1.out_channels, 64)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 2)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 2)
         self.assertIsInstance(layer[0].downsample[0], nn.Conv2d)
         self.assertEqual(layer[0].downsample[0].stride, (2, 2))
         for i in range(1, 3):
@@ -210,15 +200,13 @@ class TestVipnasResnet(TestCase):
         self.assertEqual(x_out.shape, (1, 64, 28, 28))
 
         # 3 ViPNAS_Bottleneck w/ stride 2 and downsample with avg pool
-        layer = ViPNAS_ResLayer(
-            ViPNAS_Bottleneck, 3, 32, 64, stride=2, avg_down=True)
+        layer = ViPNAS_ResLayer(ViPNAS_Bottleneck, 3, 32, 64, stride=2, avg_down=True)
         self.assertEqual(len(layer), 3)
         self.assertEqual(layer[0].in_channels, 32)
         self.assertEqual(layer[0].out_channels, 64)
         self.assertEqual(layer[0].stride, 2)
         self.assertEqual(layer[0].conv1.out_channels, 64)
-        self.assertEqual(
-            layer[0].downsample is not None and len(layer[0].downsample), 3)
+        self.assertEqual(layer[0].downsample is not None and len(layer[0].downsample), 3)
         self.assertIsInstance(layer[0].downsample[0], nn.AvgPool2d)
         self.assertEqual(layer[0].downsample[0].stride, 2)
         for i in range(1, 3):
@@ -260,7 +248,7 @@ class TestVipnasResnet(TestCase):
 
         with self.assertRaises(AssertionError):
             # len(strides) == len(dilations) == num_stages
-            ViPNAS_ResNet(50, strides=(1, ), dilations=(1, 1), num_stages=3)
+            ViPNAS_ResNet(50, strides=(1,), dilations=(1, 1), num_stages=3)
 
         with self.assertRaises(TypeError):
             # init_weights must have no parameter
@@ -269,7 +257,7 @@ class TestVipnasResnet(TestCase):
 
         with self.assertRaises(AssertionError):
             # Style must be in ['pytorch', 'caffe']
-            ViPNAS_ResNet(50, style='tensorflow')
+            ViPNAS_ResNet(50, style="tensorflow")
 
         # Test ViPNAS_ResNet50 norm_eval=True
         model = ViPNAS_ResNet(50, norm_eval=True)
@@ -287,7 +275,7 @@ class TestVipnasResnet(TestCase):
             for param in layer.parameters():
                 self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -320,7 +308,7 @@ class TestVipnasResnet(TestCase):
         self.assertEqual(feat[2].shape, (1, 304, 14, 14))
 
         # Test ViPNAS_ResNet50 with layers 3 (top feature maps) out forward
-        model = ViPNAS_ResNet(50, out_indices=(3, ))
+        model = ViPNAS_ResNet(50, out_indices=(3,))
         model.init_weights()
         model.train()
 

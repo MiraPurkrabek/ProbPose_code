@@ -16,19 +16,17 @@ class TestTopdownAffine(TestCase):
         # without udp
         transform = TopdownAffine(input_size=(192, 256), use_udp=False)
         results = transform(deepcopy(self.data_info))
-        self.assertEqual(results['input_size'], (192, 256))
-        self.assertEqual(results['img'].shape, (256, 192, 3))
-        self.assertIn('transformed_keypoints', results)
+        self.assertEqual(results["input_size"], (192, 256))
+        self.assertEqual(results["img"].shape, (256, 192, 3))
+        self.assertIn("transformed_keypoints", results)
 
         # with udp
         transform = TopdownAffine(input_size=(192, 256), use_udp=True)
         results = transform(deepcopy(self.data_info))
-        self.assertEqual(results['input_size'], (192, 256))
-        self.assertEqual(results['img'].shape, (256, 192, 3))
-        self.assertIn('transformed_keypoints', results)
+        self.assertEqual(results["input_size"], (192, 256))
+        self.assertEqual(results["img"].shape, (256, 192, 3))
+        self.assertIn("transformed_keypoints", results)
 
     def test_repr(self):
         transform = TopdownAffine(input_size=(192, 256), use_udp=False)
-        self.assertEqual(
-            repr(transform),
-            'TopdownAffine(input_size=(192, 256), use_udp=False)')
+        self.assertEqual(repr(transform), "TopdownAffine(input_size=(192, 256), use_udp=False)")

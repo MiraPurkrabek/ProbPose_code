@@ -13,12 +13,8 @@ class TestRegressionLabel(TestCase):
     def setUp(self) -> None:
         self.configs = [
             (
-                'ipr',
-                dict(
-                    type='IntegralRegressionLabel',
-                    input_size=(192, 256),
-                    heatmap_size=(48, 64),
-                    sigma=2),
+                "ipr",
+                dict(type="IntegralRegressionLabel", input_size=(192, 256), heatmap_size=(48, 64), sigma=2),
             ),
         ]
 
@@ -33,51 +29,46 @@ class TestRegressionLabel(TestCase):
             keypoints=keypoints,
             keypoints_visible=keypoints_visible,
             heatmaps=heatmaps,
-            encoded_wo_sigma=encoded_wo_sigma)
+            encoded_wo_sigma=encoded_wo_sigma,
+        )
 
     def test_encode(self):
-        keypoints = self.data['keypoints']
-        keypoints_visible = self.data['keypoints_visible']
+        keypoints = self.data["keypoints"]
+        keypoints_visible = self.data["keypoints_visible"]
 
         for name, cfg in self.configs:
             codec = KEYPOINT_CODECS.build(cfg)
 
             encoded = codec.encode(keypoints, keypoints_visible)
-            heatmaps = encoded['heatmaps']
-            keypoint_labels = encoded['keypoint_labels']
-            keypoint_weights = encoded['keypoint_weights']
+            heatmaps = encoded["heatmaps"]
+            keypoint_labels = encoded["keypoint_labels"]
+            keypoint_weights = encoded["keypoint_weights"]
 
-            self.assertEqual(heatmaps.shape, (17, 64, 48),
-                             f'Failed case: "{name}"')
-            self.assertEqual(keypoint_labels.shape, (1, 17, 2),
-                             f'Failed case: "{name}"')
-            self.assertEqual(keypoint_weights.shape, (1, 17),
-                             f'Failed case: "{name}"')
+            self.assertEqual(heatmaps.shape, (17, 64, 48), f'Failed case: "{name}"')
+            self.assertEqual(keypoint_labels.shape, (1, 17, 2), f'Failed case: "{name}"')
+            self.assertEqual(keypoint_weights.shape, (1, 17), f'Failed case: "{name}"')
 
     def test_decode(self):
-        encoded_wo_sigma = self.data['encoded_wo_sigma']
+        encoded_wo_sigma = self.data["encoded_wo_sigma"]
 
         for name, cfg in self.configs:
             codec = KEYPOINT_CODECS.build(cfg)
 
             keypoints, scores = codec.decode(encoded_wo_sigma)
 
-            self.assertEqual(keypoints.shape, (1, 17, 2),
-                             f'Failed case: "{name}"')
+            self.assertEqual(keypoints.shape, (1, 17, 2), f'Failed case: "{name}"')
             self.assertEqual(scores.shape, (1, 17), f'Failed case: "{name}"')
 
     def test_cicular_verification(self):
-        keypoints = self.data['keypoints']
-        keypoints_visible = self.data['keypoints_visible']
+        keypoints = self.data["keypoints"]
+        keypoints_visible = self.data["keypoints_visible"]
 
         for name, cfg in self.configs:
             codec = KEYPOINT_CODECS.build(cfg)
 
             encoded = codec.encode(keypoints, keypoints_visible)
-            keypoint_labels = encoded['keypoint_labels']
+            keypoint_labels = encoded["keypoint_labels"]
 
             _keypoints, _ = codec.decode(keypoint_labels)
 
-            self.assertTrue(
-                np.allclose(keypoints, _keypoints, atol=5.),
-                f'Failed case: "{name}"')
+            self.assertTrue(np.allclose(keypoints, _keypoints, atol=5.0), f'Failed case: "{name}"')

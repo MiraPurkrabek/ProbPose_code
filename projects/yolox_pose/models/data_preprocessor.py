@@ -16,8 +16,7 @@ class PoseBatchSyncRandomResize(BatchSyncRandomResize):
     rescales the keypoints coordinates simultaneously.
     """
 
-    def forward(self, inputs: Tensor, data_samples: List[PoseDataSample]
-                ) -> Tuple[Tensor, List[PoseDataSample]]:
+    def forward(self, inputs: Tensor, data_samples: List[PoseDataSample]) -> Tuple[Tensor, List[PoseDataSample]]:
 
         inputs = inputs.float()
         h, w = inputs.shape[-2:]

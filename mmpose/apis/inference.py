@@ -19,8 +19,7 @@ from mmpose.structures import PoseDataSample
 from mmpose.structures.bbox import bbox_xywh2xyxy
 
 
-def dataset_meta_from_config(config: Config,
-                             dataset_mode: str = 'train') -> Optional[dict]:
+def dataset_meta_from_config(config: Config, dataset_mode: str = "train") -> Optional[dict]:
     """Get dataset metainfo from the model config.
 
     Args:
@@ -36,25 +35,24 @@ def dataset_meta_from_config(config: Config,
         Return ``None`` if failing to get dataset metainfo from the config.
     """
     try:
-        if dataset_mode == 'train':
+        if dataset_mode == "train":
             dataset_cfg = config.train_dataloader.dataset
-        elif dataset_mode == 'val':
+        elif dataset_mode == "val":
             dataset_cfg = config.val_dataloader.dataset
-        elif dataset_mode == 'test':
+        elif dataset_mode == "test":
             dataset_cfg = config.test_dataloader.dataset
         else:
             raise ValueError(
-                f'Invalid dataset {dataset_mode} to get metainfo. '
-                'Should be one of "train", "val", or "test".')
+                f"Invalid dataset {dataset_mode} to get metainfo. " 'Should be one of "train", "val", or "test".'
+            )
 
-        if 'metainfo' in dataset_cfg:
+        if "metainfo" in dataset_cfg:
             metainfo = dataset_cfg.metainfo
         else:
             import mmpose.datasets.datasets  # noqa: F401, F403
             from mmpose.registry import DATASETS
 
-            dataset_class = dataset_cfg.type if isinstance(
-                dataset_cfg.type, type) else DATASETS.get(dataset_cfg.type)
+            dataset_class = dataset_cfg.type if isinstance(dataset_cfg.type, type) else DATASETS.get(dataset_cfg.type)
             metainfo = dataset_class.METAINFO
 
         metainfo = parse_pose_metainfo(metainfo)
@@ -65,10 +63,12 @@ def dataset_meta_from_config(config: Config,
     return metainfo
 
 
-def init_model(config: Union[str, Path, Config],
-               checkpoint: Optional[str] = None,
-               device: str = 'cuda:0',
-               cfg_options: Optional[dict] = None) -> nn.Module:
+def init_model(
+    config: Union[str, Path, Config],
+    checkpoint: Optional[str] = None,
+    device: str = "cuda:0",
+    cfg_options: Optional[dict] = None,
+) -> nn.Module:
     """Initialize a pose estimator from a config file.
 
     Args:
@@ -88,16 +88,15 @@ def init_model(config: Union[str, Path, Config],
     if isinstance(config, (str, Path)):
         config = Config.fromfile(config)
     elif not isinstance(config, Config):
-        raise TypeError('config must be a filename or Config object, '
-                        f'but got {type(config)}')
+        raise TypeError("config must be a filename or Config object, " f"but got {type(config)}")
     if cfg_options is not None:
         config.merge_from_dict(cfg_options)
-    elif 'init_cfg' in config.model.backbone:
+    elif "init_cfg" in config.model.backbone:
         config.model.backbone.init_cfg = None
     config.model.train_cfg = None
 
     # register all modules in mmpose into the registries
-    scope = config.get('default_scope', 'mmpose')
+    scope = config.get("default_scope", "mmpose")
     if scope is not None:
         init_default_scope(scope)
 
@@ -107,21 +106,21 @@ def init_model(config: Union[str, Path, Config],
     dataset_meta = None
 
     if checkpoint is not None:
-        ckpt = load_checkpoint(model, checkpoint, map_location='cpu')
+        ckpt = load_checkpoint(model, checkpoint, map_location="cpu")
 
-        if 'dataset_meta' in ckpt.get('meta', {}):
+        if "dataset_meta" in ckpt.get("meta", {}):
             # checkpoint from mmpose 1.x
-            dataset_meta = ckpt['meta']['dataset_meta']
+            dataset_meta = ckpt["meta"]["dataset_meta"]
 
     if dataset_meta is None:
-        dataset_meta = dataset_meta_from_config(config, dataset_mode='train')
+        dataset_meta = dataset_meta_from_config(config, dataset_mode="train")
 
     if dataset_meta is None:
-        warnings.simplefilter('once')
-        warnings.warn('Can not load dataset_meta from the checkpoint or the '
-                      'model config. Use COCO metainfo by default.')
-        dataset_meta = parse_pose_metainfo(
-            dict(from_file='configs/_base_/datasets/coco.py'))
+        warnings.simplefilter("once")
+        warnings.warn(
+            "Can not load dataset_meta from the checkpoint or the " "model config. Use COCO metainfo by default."
+        )
+        dataset_meta = parse_pose_metainfo(dict(from_file="configs/_base_/datasets/coco.py"))
 
     model.dataset_meta = dataset_meta
 
@@ -131,10 +130,12 @@ def init_model(config: Union[str, Path, Config],
     return model
 
 
-def inference_topdown(model: nn.Module,
-                      img: Union[np.ndarray, str],
-                      bboxes: Optional[Union[List, np.ndarray]] = None,
-                      bbox_format: str = 'xyxy') -> List[PoseDataSample]:
+def inference_topdown(
+    model: nn.Module,
+    img: Union[np.ndarray, str],
+    bboxes: Optional[Union[List, np.ndarray]] = None,
+    bbox_format: str = "xyxy",
+) -> List[PoseDataSample]:
     """Inference image with a top-down pose estimator.
 
     Args:
@@ -152,7 +153,7 @@ def inference_topdown(model: nn.Module,
         ``data_sample.pred_instances.keypoints`` and
         ``data_sample.pred_instances.keypoint_scores``.
     """
-    scope = model.cfg.get('default_scope', 'mmpose')
+    scope = model.cfg.get("default_scope", "mmpose")
     if scope is not None:
         init_default_scope(scope)
     pipeline = Compose(model.cfg.test_dataloader.dataset.pipeline)
@@ -169,10 +170,9 @@ def inference_topdown(model: nn.Module,
         if isinstance(bboxes, list):
             bboxes = np.array(bboxes)
 
-        assert bbox_format in {'xyxy', 'xywh'}, \
-            f'Invalid bbox_format "{bbox_format}".'
+        assert bbox_format in {"xyxy", "xywh"}, f'Invalid bbox_format "{bbox_format}".'
 
-        if bbox_format == 'xywh':
+        if bbox_format == "xywh":
             bboxes = bbox_xywh2xyxy(bboxes)
 
     # construct batch data samples
@@ -182,8 +182,8 @@ def inference_topdown(model: nn.Module,
             data_info = dict(img_path=img)
         else:
             data_info = dict(img=img)
-        data_info['bbox'] = bbox[None]  # shape (1, 4)
-        data_info['bbox_score'] = np.ones(1, dtype=np.float32)  # shape (1,)
+        data_info["bbox"] = bbox[None]  # shape (1, 4)
+        data_info["bbox_score"] = np.ones(1, dtype=np.float32)  # shape (1,)
         data_info.update(model.dataset_meta)
         data_list.append(pipeline(data_info))
 

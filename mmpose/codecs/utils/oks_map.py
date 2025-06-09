@@ -6,10 +6,8 @@ import numpy as np
 
 
 def generate_probmaps(
-    heatmap_size: Tuple[int, int],
-    keypoints: np.ndarray,
-    keypoints_visible: np.ndarray,
-    sigma: float = 0.55) -> Tuple[np.ndarray, np.ndarray]:
+    heatmap_size: Tuple[int, int], keypoints: np.ndarray, keypoints_visible: np.ndarray, sigma: float = 0.55
+) -> Tuple[np.ndarray, np.ndarray]:
     """Generate Object Keypoint Similarity (OKS) maps for keypoints.
 
     This function generates OKS maps that represent the expected OKS score at each
@@ -38,13 +36,12 @@ def generate_probmaps(
     W, H = heatmap_size
 
     # The default sigmas are used for COCO dataset.
-    sigmas = np.array(
-        [2.6, 2.5, 2.5, 3.5, 3.5, 7.9, 7.9, 7.2, 7.2, 6.2, 6.2, 10.7, 10.7, 8.7, 8.7, 8.9, 8.9])/100
-    
+    sigmas = np.array([2.6, 2.5, 2.5, 3.5, 3.5, 7.9, 7.9, 7.2, 7.2, 6.2, 6.2, 10.7, 10.7, 8.7, 8.7, 8.9, 8.9]) / 100
+
     heatmaps = np.zeros((K, H, W), dtype=np.float32)
     keypoint_weights = keypoints_visible.copy()
 
-    bbox_area = np.sqrt(H/1.25 * W/1.25)
+    bbox_area = np.sqrt(H / 1.25 * W / 1.25)
 
     for n, k in product(range(N), range(K)):
         kpt_sigma = sigmas[k]
@@ -57,16 +54,16 @@ def generate_probmaps(
         dy = y_idx - keypoints[n, k, 1]
         dist = np.sqrt(dx**2 + dy**2)
 
-        vars = (kpt_sigma*2)**2
+        vars = (kpt_sigma * 2) ** 2
         s = vars * bbox_area * 2
         s = np.clip(s, 0.55, 3.0)
         if sigma is not None and sigma > 0:
             s = sigma
-        e_map = dist**2 / (2*s)
+        e_map = dist**2 / (2 * s)
         oks_map = np.exp(-e_map)
 
         keypoint_weights[n, k] = (oks_map.max() > 0).astype(int)
-        
-        heatmaps[k] = oks_map 
+
+        heatmaps[k] = oks_map
 
     return heatmaps, keypoint_weights

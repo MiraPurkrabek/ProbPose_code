@@ -21,33 +21,31 @@ class TestHand3DInferencer(TestCase):
 
     def test_init(self):
 
-        inferencer = Hand3DInferencer(model='hand3d')
+        inferencer = Hand3DInferencer(model="hand3d")
         self.assertIsInstance(inferencer.model, torch.nn.Module)
 
     def test_call(self):
 
-        inferencer = Hand3DInferencer(model='hand3d')
+        inferencer = Hand3DInferencer(model="hand3d")
 
-        img_path = 'tests/data/interhand2.6m/image29590.jpg'
+        img_path = "tests/data/interhand2.6m/image29590.jpg"
         img = mmcv.imread(img_path)
 
         # `inputs` is path to an image
         inputs = img_path
         results1 = next(inferencer(inputs, return_vis=True))
-        self.assertIn('visualization', results1)
-        self.assertIn('predictions', results1)
-        self.assertIn('keypoints', results1['predictions'][0][0])
-        self.assertEqual(len(results1['predictions'][0][0]['keypoints']), 42)
+        self.assertIn("visualization", results1)
+        self.assertIn("predictions", results1)
+        self.assertIn("keypoints", results1["predictions"][0][0])
+        self.assertEqual(len(results1["predictions"][0][0]["keypoints"]), 42)
 
         # `inputs` is an image array
         inputs = img
         results2 = next(inferencer(inputs))
-        self.assertEqual(
-            len(results1['predictions'][0]), len(results2['predictions'][0]))
-        self.assertSequenceEqual(results1['predictions'][0][0]['keypoints'],
-                                 results2['predictions'][0][0]['keypoints'])
+        self.assertEqual(len(results1["predictions"][0]), len(results2["predictions"][0]))
+        self.assertSequenceEqual(results1["predictions"][0][0]["keypoints"], results2["predictions"][0][0]["keypoints"])
         results2 = next(inferencer(inputs, return_datasamples=True))
-        self.assertIsInstance(results2['predictions'][0], PoseDataSample)
+        self.assertIsInstance(results2["predictions"][0], PoseDataSample)
 
         # `inputs` is path to a directory
         inputs = osp.dirname(img_path)
@@ -62,8 +60,7 @@ class TestHand3DInferencer(TestCase):
             for res in inferencer(inputs, out_dir=tmp_dir):
                 for key in res:
                     results3[key].extend(res[key])
-            self.assertEqual(len(os.listdir(f'{tmp_dir}/visualizations')), 4)
-            self.assertEqual(len(os.listdir(f'{tmp_dir}/predictions')), 4)
-        self.assertEqual(len(results3['predictions']), 4)
-        self.assertSequenceEqual(results1['predictions'][0][0]['keypoints'],
-                                 results3['predictions'][1][0]['keypoints'])
+            self.assertEqual(len(os.listdir(f"{tmp_dir}/visualizations")), 4)
+            self.assertEqual(len(os.listdir(f"{tmp_dir}/predictions")), 4)
+        self.assertEqual(len(results3["predictions"]), 4)
+        self.assertSequenceEqual(results1["predictions"][0][0]["keypoints"], results3["predictions"][1][0]["keypoints"])

@@ -57,11 +57,8 @@ class RTMDet(nn.Module):
 
         step = self.input_shape // self.stage[stage]
 
-        block_step = torch.linspace(
-            0, self.stage[stage] - 1, steps=self.stage[stage],
-            device='cuda') * step
-        block_x = torch.broadcast_to(block_step,
-                                     [self.stage[stage], self.stage[stage]])
+        block_step = torch.linspace(0, self.stage[stage] - 1, steps=self.stage[stage], device="cuda") * step
+        block_x = torch.broadcast_to(block_step, [self.stage[stage], self.stage[stage]])
         block_y = torch.transpose(block_x, 1, 0)
         block_x = torch.unsqueeze(block_x, 0)
         block_y = torch.unsqueeze(block_y, 0)
@@ -74,31 +71,19 @@ class RTMDet(nn.Module):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='convert rtmdet model to ONNX.')
-    parser.add_argument(
-        '--config', type=str, help='rtmdet config file path from mmdetection.')
-    parser.add_argument(
-        '--checkpoint',
-        type=str,
-        help='rtmdet checkpoint path from mmdetection.')
-    parser.add_argument('--output', type=str, help='output filename.')
-    parser.add_argument(
-        '--device',
-        type=str,
-        default='cuda:0',
-        help='Device used for inference')
-    parser.add_argument(
-        '--input-name', type=str, default='image', help='ONNX input name.')
-    parser.add_argument(
-        '--output-name', type=str, default='output', help='ONNX output name.')
-    parser.add_argument(
-        '--opset', type=int, default=11, help='ONNX opset version.')
+    parser = argparse.ArgumentParser(description="convert rtmdet model to ONNX.")
+    parser.add_argument("--config", type=str, help="rtmdet config file path from mmdetection.")
+    parser.add_argument("--checkpoint", type=str, help="rtmdet checkpoint path from mmdetection.")
+    parser.add_argument("--output", type=str, help="output filename.")
+    parser.add_argument("--device", type=str, default="cuda:0", help="Device used for inference")
+    parser.add_argument("--input-name", type=str, default="image", help="ONNX input name.")
+    parser.add_argument("--output-name", type=str, default="output", help="ONNX output name.")
+    parser.add_argument("--opset", type=int, default=11, help="ONNX opset version.")
     args = parser.parse_args()
     return args
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
 
     model = build_model_from_cfg(args.config, args.checkpoint, args.device)
@@ -107,9 +92,5 @@ if __name__ == '__main__':
     x = torch.randn((1, 3, 640, 640), device=args.device)
 
     torch.onnx.export(
-        rtmdet,
-        x,
-        args.output,
-        input_names=[args.input_name],
-        output_names=[args.output_name],
-        opset_version=args.opset)
+        rtmdet, x, args.output, input_names=[args.input_name], output_names=[args.output_name], opset_version=args.opset
+    )

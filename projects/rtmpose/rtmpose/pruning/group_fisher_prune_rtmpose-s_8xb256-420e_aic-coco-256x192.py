@@ -17,11 +17,11 @@ target_flop_ratio (float): The target flop ratio to prune your model.
 input_shape (Tuple): input shape to measure the flops.
 """
 
-_base_ = 'mmpose::body_2d_keypoint/rtmpose/coco/rtmpose-s_8xb256-420e_aic-coco-256x192.py'  # noqa
-pretrained_path = 'https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmpose-s_simcc-aic-coco_pt-aic-coco_420e-256x192-fcb2599b_20230126.pth'  # noqa
+_base_ = "mmpose::body_2d_keypoint/rtmpose/coco/rtmpose-s_8xb256-420e_aic-coco-256x192.py"  # noqa
+pretrained_path = "https://download.openmmlab.com/mmpose/v1/projects/rtmpose/rtmpose-s_simcc-aic-coco_pt-aic-coco_420e-256x192-fcb2599b_20230126.pth"  # noqa
 
 interval = 10
-normalization_type = 'act'
+normalization_type = "act"
 lr_ratio = 0.1
 
 target_flop_ratio = 0.51
@@ -30,44 +30,45 @@ input_shape = (1, 3, 256, 192)
 
 architecture = _base_.model
 
-if hasattr(_base_, 'data_preprocessor'):
-    architecture.update({'data_preprocessor': _base_.data_preprocessor})
+if hasattr(_base_, "data_preprocessor"):
+    architecture.update({"data_preprocessor": _base_.data_preprocessor})
     data_preprocessor = None
 
-architecture.init_cfg = dict(type='Pretrained', checkpoint=pretrained_path)
-architecture['_scope_'] = _base_.default_scope
+architecture.init_cfg = dict(type="Pretrained", checkpoint=pretrained_path)
+architecture["_scope_"] = _base_.default_scope
 
 model = dict(
     _delete_=True,
-    _scope_='mmrazor',
-    type='GroupFisherAlgorithm',
+    _scope_="mmrazor",
+    type="GroupFisherAlgorithm",
     architecture=architecture,
     interval=interval,
     mutator=dict(
-        type='GroupFisherChannelMutator',
-        parse_cfg=dict(type='ChannelAnalyzer', tracer_type='FxTracer'),
+        type="GroupFisherChannelMutator",
+        parse_cfg=dict(type="ChannelAnalyzer", tracer_type="FxTracer"),
         channel_unit_cfg=dict(
-            type='GroupFisherChannelUnit',
-            default_args=dict(normalization_type=normalization_type, ),
+            type="GroupFisherChannelUnit",
+            default_args=dict(
+                normalization_type=normalization_type,
+            ),
         ),
     ),
 )
 
 model_wrapper_cfg = dict(
-    type='mmrazor.GroupFisherDDP',
+    type="mmrazor.GroupFisherDDP",
     broadcast_buffers=False,
 )
 
-optim_wrapper = dict(
-    optimizer=dict(lr=_base_.optim_wrapper.optimizer.lr * lr_ratio))
+optim_wrapper = dict(optimizer=dict(lr=_base_.optim_wrapper.optimizer.lr * lr_ratio))
 
-custom_hooks = getattr(_base_, 'custom_hooks', []) + [
-    dict(type='mmrazor.PruningStructureHook'),
+custom_hooks = getattr(_base_, "custom_hooks", []) + [
+    dict(type="mmrazor.PruningStructureHook"),
     dict(
-        type='mmrazor.ResourceInfoHook',
+        type="mmrazor.ResourceInfoHook",
         interval=interval,
         demo_input=dict(
-            type='mmrazor.DefaultDemoInput',
+            type="mmrazor.DefaultDemoInput",
             input_shape=input_shape,
         ),
         save_ckpt_thr=[target_flop_ratio],

@@ -31,35 +31,34 @@ class YOLOXPoseAnnotationProcessor(BaseAnnotationProcessor):
             codec in deployment but is not used indeed.
     """
 
-    auxiliary_encode_keys = {'category_id', 'bbox'}
+    auxiliary_encode_keys = {"category_id", "bbox"}
     label_mapping_table = dict(
-        bbox='bboxes',
-        bbox_labels='labels',
-        keypoints='keypoints',
-        keypoints_visible='keypoints_visible',
-        area='areas',
+        bbox="bboxes",
+        bbox_labels="labels",
+        keypoints="keypoints",
+        keypoints_visible="keypoints_visible",
+        area="areas",
     )
     instance_mapping_table = dict(
-        bbox='bboxes',
-        bbox_score='bbox_scores',
-        keypoints='keypoints',
-        keypoints_visible='keypoints_visible',
+        bbox="bboxes",
+        bbox_score="bbox_scores",
+        keypoints="keypoints",
+        keypoints_visible="keypoints_visible",
         # remove 'bbox_scales' in default instance_mapping_table to avoid
         # length mismatch during training with multiple datasets
     )
 
-    def __init__(self,
-                 expand_bbox: bool = False,
-                 input_size: Optional[Tuple] = None):
+    def __init__(self, expand_bbox: bool = False, input_size: Optional[Tuple] = None):
         super().__init__()
         self.expand_bbox = expand_bbox
 
-    def encode(self,
-               keypoints: Optional[np.ndarray] = None,
-               keypoints_visible: Optional[np.ndarray] = None,
-               bbox: Optional[np.ndarray] = None,
-               category_id: Optional[List[int]] = None
-               ) -> Dict[str, np.ndarray]:
+    def encode(
+        self,
+        keypoints: Optional[np.ndarray] = None,
+        keypoints_visible: Optional[np.ndarray] = None,
+        bbox: Optional[np.ndarray] = None,
+        category_id: Optional[List[int]] = None,
+    ) -> Dict[str, np.ndarray]:
         """Encode keypoints, bounding boxes, and category IDs.
 
         Args:
@@ -90,11 +89,11 @@ class YOLOXPoseAnnotationProcessor(BaseAnnotationProcessor):
             kpts_max[keypoints_visible == 0] = NEG_INF
             bbox[..., 2:] = np.maximum(bbox[..., 2:], kpts_max.max(axis=1))
 
-            results['bbox'] = bbox
+            results["bbox"] = bbox
 
         if category_id is not None:
             # Convert category IDs to labels
             bbox_labels = np.array(category_id).astype(np.int8) - 1
-            results['bbox_labels'] = bbox_labels
+            results["bbox_labels"] = bbox_labels
 
         return results

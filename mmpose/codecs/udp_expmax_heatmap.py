@@ -6,8 +6,13 @@ import numpy as np
 
 from mmpose.registry import KEYPOINT_CODECS
 from .base import BaseKeypointCodec
-from .utils import (generate_offset_heatmap, generate_udp_gaussian_heatmaps,
-                    get_heatmap_maximum, refine_keypoints_dark_udp, get_heatmap_expected_value)
+from .utils import (
+    generate_offset_heatmap,
+    generate_udp_gaussian_heatmaps,
+    get_heatmap_expected_value,
+    get_heatmap_maximum,
+    refine_keypoints_dark_udp,
+)
 
 
 @KEYPOINT_CODECS.register_module()
@@ -64,20 +69,25 @@ class UDPExpMaxHeatmap(BaseKeypointCodec):
         https://arxiv.org/abs/2412.02254
     """
 
-    label_mapping_table = dict(keypoint_weights='keypoint_weights', )
-    field_mapping_table = dict(heatmaps='heatmaps', )
+    label_mapping_table = dict(
+        keypoint_weights="keypoint_weights",
+    )
+    field_mapping_table = dict(
+        heatmaps="heatmaps",
+    )
 
-    def __init__(self,
-                 input_size: Tuple[int, int],
-                 heatmap_size: Tuple[int, int],
-                 heatmap_type: str = 'gaussian',
-                 sigma: float = 2.,
-                 radius_factor: float = 0.0546875,
-                 blur_kernel_size: int = 11,
-                 increase_sigma_with_padding=False,
-                 normalize=False,
-                 parzen_size=0.1,
-                 ) -> None:
+    def __init__(
+        self,
+        input_size: Tuple[int, int],
+        heatmap_size: Tuple[int, int],
+        heatmap_type: str = "gaussian",
+        sigma: float = 2.0,
+        radius_factor: float = 0.0546875,
+        blur_kernel_size: int = 11,
+        increase_sigma_with_padding=False,
+        normalize=False,
+        parzen_size=0.1,
+    ) -> None:
         super().__init__()
         self.input_size = input_size
         self.heatmap_size = heatmap_size
@@ -85,23 +95,25 @@ class UDPExpMaxHeatmap(BaseKeypointCodec):
         self.radius_factor = radius_factor
         self.heatmap_type = heatmap_type
         self.blur_kernel_size = blur_kernel_size
-        self.scale_factor = ((np.array(input_size) - 1) /
-                             (np.array(heatmap_size) - 1)).astype(np.float32)
+        self.scale_factor = ((np.array(input_size) - 1) / (np.array(heatmap_size) - 1)).astype(np.float32)
         self.increase_sigma_with_padding = increase_sigma_with_padding
         self.normalize = normalize
         self.parzen_size = parzen_size
 
-        if self.heatmap_type not in {'gaussian', 'combined'}:
+        if self.heatmap_type not in {"gaussian", "combined"}:
             raise ValueError(
-                f'{self.__class__.__name__} got invalid `heatmap_type` value'
-                f'{self.heatmap_type}. Should be one of '
-                '{"gaussian", "combined"}')
+                f"{self.__class__.__name__} got invalid `heatmap_type` value"
+                f"{self.heatmap_type}. Should be one of "
+                '{"gaussian", "combined"}'
+            )
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None,
-               id_similarity: Optional[float] = 0.0,
-               keypoints_visibility: Optional[np.ndarray] = None) -> dict:
+    def encode(
+        self,
+        keypoints: np.ndarray,
+        keypoints_visible: Optional[np.ndarray] = None,
+        id_similarity: Optional[float] = 0.0,
+        keypoints_visibility: Optional[np.ndarray] = None,
+    ) -> dict:
         """Encode keypoints into heatmaps. Note that the original keypoint
         coordinates should be in the input image space.
 
@@ -125,43 +137,44 @@ class UDPExpMaxHeatmap(BaseKeypointCodec):
             - keypoint_weights (np.ndarray): The target weights in shape
                 (K,)
         """
-        assert keypoints.shape[0] == 1, (
-            f'{self.__class__.__name__} only support single-instance '
-            'keypoint encoding')
-        
+        assert keypoints.shape[0] == 1, f"{self.__class__.__name__} only support single-instance " "keypoint encoding"
+
         if keypoints_visibility is None:
             keypoints_visibility = np.zeros(keypoints.shape[:2], dtype=np.float32)
 
         if keypoints_visible is None:
             keypoints_visible = np.ones(keypoints.shape[:2], dtype=np.float32)
 
-        if self.heatmap_type == 'gaussian':
+        if self.heatmap_type == "gaussian":
             heatmaps, keypoint_weights = generate_udp_gaussian_heatmaps(
                 heatmap_size=self.heatmap_size,
                 keypoints=keypoints / self.scale_factor,
                 keypoints_visible=keypoints_visible,
                 sigma=self.sigma,
                 keypoints_visibility=keypoints_visibility,
-                increase_sigma_with_padding=self.increase_sigma_with_padding)
-        elif self.heatmap_type == 'combined':
+                increase_sigma_with_padding=self.increase_sigma_with_padding,
+            )
+        elif self.heatmap_type == "combined":
             heatmaps, keypoint_weights = generate_offset_heatmap(
                 heatmap_size=self.heatmap_size,
                 keypoints=keypoints / self.scale_factor,
                 keypoints_visible=keypoints_visible,
-                radius_factor=self.radius_factor)
+                radius_factor=self.radius_factor,
+            )
         else:
             raise ValueError(
-                f'{self.__class__.__name__} got invalid `heatmap_type` value'
-                f'{self.heatmap_type}. Should be one of '
-                '{"gaussian", "combined"}')
-        
+                f"{self.__class__.__name__} got invalid `heatmap_type` value"
+                f"{self.heatmap_type}. Should be one of "
+                '{"gaussian", "combined"}'
+            )
+
         if self.normalize:
             heatmaps_sum = np.sum(heatmaps, axis=(1, 2), keepdims=False)
             mask = heatmaps_sum > 0
             heatmaps[mask, :, :] = heatmaps[mask, :, :] / (heatmaps_sum[mask, None, None] + np.finfo(np.float32).eps)
 
         annotated = keypoints_visible > 0
-        
+
         in_image = np.logical_and(
             keypoints[:, :, 0] >= 0,
             keypoints[:, :, 0] < self.input_size[0],
@@ -174,7 +187,7 @@ class UDPExpMaxHeatmap(BaseKeypointCodec):
             in_image,
             keypoints[:, :, 1] < self.input_size[1],
         )
-        
+
         encoded = dict(
             heatmaps=heatmaps,
             keypoint_weights=keypoint_weights,
@@ -202,7 +215,7 @@ class UDPExpMaxHeatmap(BaseKeypointCodec):
         """
         heatmaps = encoded.copy()
 
-        if self.heatmap_type == 'gaussian':
+        if self.heatmap_type == "gaussian":
             keypoints, scores = get_heatmap_expected_value(
                 heatmaps,
                 parzen_size=self.parzen_size,
@@ -212,7 +225,7 @@ class UDPExpMaxHeatmap(BaseKeypointCodec):
             keypoints = keypoints[None]
             scores = scores[None]
 
-        elif self.heatmap_type == 'combined':
+        elif self.heatmap_type == "combined":
             _K, H, W = heatmaps.shape
             K = _K // 3
 

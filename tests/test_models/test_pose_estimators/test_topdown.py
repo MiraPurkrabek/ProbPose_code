@@ -10,15 +10,12 @@ from mmpose.testing import get_packed_inputs, get_pose_estimator_cfg
 from mmpose.utils import register_all_modules
 
 configs = [
-    'body_2d_keypoint/topdown_heatmap/coco/'
-    'td-hm_hrnet-w32_8xb64-210e_coco-256x192.py',
-    'configs/body_2d_keypoint/topdown_regression/coco/'
-    'td-reg_res50_8xb64-210e_coco-256x192.py',
-    'configs/body_2d_keypoint/simcc/coco/'
-    'simcc_mobilenetv2_wo-deconv-8xb64-210e_coco-256x192.py',
+    "body_2d_keypoint/topdown_heatmap/coco/" "td-hm_hrnet-w32_8xb64-210e_coco-256x192.py",
+    "configs/body_2d_keypoint/topdown_regression/coco/" "td-reg_res50_8xb64-210e_coco-256x192.py",
+    "configs/body_2d_keypoint/simcc/coco/" "simcc_mobilenetv2_wo-deconv-8xb64-210e_coco-256x192.py",
 ]
 
-configs_with_devices = [(config, ('cpu', 'cuda')) for config in configs]
+configs_with_devices = [(config, ("cpu", "cuda")) for config in configs]
 
 
 class TestTopdownPoseEstimator(TestCase):
@@ -32,10 +29,11 @@ class TestTopdownPoseEstimator(TestCase):
         model_cfg.backbone.init_cfg = None
 
         from mmpose.models import build_pose_estimator
+
         model = build_pose_estimator(model_cfg)
         self.assertTrue(model.backbone)
         self.assertTrue(model.head)
-        if model_cfg.get('neck', None):
+        if model_cfg.get("neck", None):
             self.assertTrue(model.neck)
 
     @parameterized.expand(configs_with_devices)
@@ -48,14 +46,14 @@ class TestTopdownPoseEstimator(TestCase):
         for device in devices:
             model = build_pose_estimator(model_cfg)
 
-            if device == 'cuda':
+            if device == "cuda":
                 if not torch.cuda.is_available():
-                    return unittest.skip('test requires GPU and torch+cuda')
+                    return unittest.skip("test requires GPU and torch+cuda")
                 model = model.cuda()
 
             packed_inputs = get_packed_inputs(2)
             data = model.data_preprocessor(packed_inputs, training=True)
-            losses = model.forward(**data, mode='loss')
+            losses = model.forward(**data, mode="loss")
             self.assertIsInstance(losses, dict)
 
     @parameterized.expand(configs_with_devices)
@@ -68,16 +66,16 @@ class TestTopdownPoseEstimator(TestCase):
         for device in devices:
             model = build_pose_estimator(model_cfg)
 
-            if device == 'cuda':
+            if device == "cuda":
                 if not torch.cuda.is_available():
-                    return unittest.skip('test requires GPU and torch+cuda')
+                    return unittest.skip("test requires GPU and torch+cuda")
                 model = model.cuda()
 
             packed_inputs = get_packed_inputs(2)
             model.eval()
             with torch.no_grad():
                 data = model.data_preprocessor(packed_inputs, training=True)
-                batch_results = model.forward(**data, mode='predict')
+                batch_results = model.forward(**data, mode="predict")
                 self.assertEqual(len(batch_results), 2)
                 self.assertIsInstance(batch_results[0], PoseDataSample)
 
@@ -91,12 +89,12 @@ class TestTopdownPoseEstimator(TestCase):
         for device in devices:
             model = build_pose_estimator(model_cfg)
 
-            if device == 'cuda':
+            if device == "cuda":
                 if not torch.cuda.is_available():
-                    return unittest.skip('test requires GPU and torch+cuda')
+                    return unittest.skip("test requires GPU and torch+cuda")
                 model = model.cuda()
 
             packed_inputs = get_packed_inputs(2)
             data = model.data_preprocessor(packed_inputs, training=True)
-            batch_results = model.forward(**data, mode='tensor')
+            batch_results = model.forward(**data, mode="tensor")
             self.assertIsInstance(batch_results, (tuple, torch.Tensor))

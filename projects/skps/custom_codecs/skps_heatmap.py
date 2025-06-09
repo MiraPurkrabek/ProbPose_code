@@ -4,8 +4,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 from mmpose.codecs.base import BaseKeypointCodec
-from mmpose.codecs.utils.gaussian_heatmap import \
-    generate_unbiased_gaussian_heatmaps
+from mmpose.codecs.utils.gaussian_heatmap import generate_unbiased_gaussian_heatmaps
 from mmpose.codecs.utils.post_processing import get_heatmap_maximum
 from mmpose.registry import KEYPOINT_CODECS
 
@@ -39,23 +38,18 @@ class SKPSHeatmap(BaseKeypointCodec):
         sigma (float): The sigma value of the Gaussian heatmap
     """
 
-    def __init__(self, input_size: Tuple[int, int],
-                 heatmap_size: Tuple[int, int], sigma: float) -> None:
+    def __init__(self, input_size: Tuple[int, int], heatmap_size: Tuple[int, int], sigma: float) -> None:
         super().__init__()
         self.input_size = input_size
         self.heatmap_size = heatmap_size
         self.sigma = sigma
-        self.scale_factor = (np.array(input_size) /
-                             heatmap_size).astype(np.float32)
+        self.scale_factor = (np.array(input_size) / heatmap_size).astype(np.float32)
 
         self.y_range, self.x_range = np.meshgrid(
-            np.arange(0, self.heatmap_size[1]),
-            np.arange(0, self.heatmap_size[0]),
-            indexing='ij')
+            np.arange(0, self.heatmap_size[1]), np.arange(0, self.heatmap_size[0]), indexing="ij"
+        )
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None) -> dict:
+    def encode(self, keypoints: np.ndarray, keypoints_visible: Optional[np.ndarray] = None) -> dict:
         """Encode keypoints into heatmaps. Note that the original keypoint
         coordinates should be in the input image space.
 
@@ -75,9 +69,7 @@ class SKPSHeatmap(BaseKeypointCodec):
                 (N, K)
         """
 
-        assert keypoints.shape[0] == 1, (
-            f'{self.__class__.__name__} only support single-instance '
-            'keypoint encoding')
+        assert keypoints.shape[0] == 1, f"{self.__class__.__name__} only support single-instance " "keypoint encoding"
 
         if keypoints_visible is None:
             keypoints_visible = np.ones(keypoints.shape[:2], dtype=np.float32)
@@ -86,22 +78,19 @@ class SKPSHeatmap(BaseKeypointCodec):
             heatmap_size=self.heatmap_size,
             keypoints=keypoints / self.scale_factor,
             keypoints_visible=keypoints_visible,
-            sigma=self.sigma)
+            sigma=self.sigma,
+        )
 
         offset_maps = self.generate_offset_map(
             heatmap_size=self.heatmap_size,
             keypoints=keypoints / self.scale_factor,
         )
 
-        encoded = dict(
-            heatmaps=heatmaps,
-            keypoint_weights=keypoint_weights[0],
-            displacements=offset_maps)
+        encoded = dict(heatmaps=heatmaps, keypoint_weights=keypoint_weights[0], displacements=offset_maps)
 
         return encoded
 
-    def generate_offset_map(self, heatmap_size: Tuple[int, int],
-                            keypoints: np.ndarray):
+    def generate_offset_map(self, heatmap_size: Tuple[int, int], keypoints: np.ndarray):
 
         N, K, _ = keypoints.shape
 
@@ -120,8 +109,7 @@ class SKPSHeatmap(BaseKeypointCodec):
 
         return offset_map
 
-    def decode(self, encoded: np.ndarray,
-               offset_maps: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def decode(self, encoded: np.ndarray, offset_maps: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Decode keypoint coordinates from heatmaps. The decoded keypoint
         coordinates are in the input image space.
 

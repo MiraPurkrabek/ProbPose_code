@@ -13,25 +13,23 @@ class TestSCnet(TestCase):
     @staticmethod
     def is_block(modules):
         """Check if is SCNet building block."""
-        if isinstance(modules, (SCBottleneck, )):
+        if isinstance(modules, (SCBottleneck,)):
             return True
         return False
 
     @staticmethod
     def is_norm(modules):
         """Check if is one of the norms."""
-        if isinstance(modules, (_BatchNorm, )):
+        if isinstance(modules, (_BatchNorm,)):
             return True
         return False
 
     @staticmethod
     def all_zeros(modules):
         """Check if the weight(and bias) is all zero."""
-        weight_zero = torch.equal(modules.weight.data,
-                                  torch.zeros_like(modules.weight.data))
-        if hasattr(modules, 'bias'):
-            bias_zero = torch.equal(modules.bias.data,
-                                    torch.zeros_like(modules.bias.data))
+        weight_zero = torch.equal(modules.weight.data, torch.zeros_like(modules.weight.data))
+        if hasattr(modules, "bias"):
+            bias_zero = torch.equal(modules.bias.data, torch.zeros_like(modules.bias.data))
         else:
             bias_zero = True
 
@@ -87,7 +85,7 @@ class TestSCnet(TestCase):
             for param in layer.parameters():
                 self.assertFalse(param.requires_grad)
         for i in range(1, frozen_stages + 1):
-            layer = getattr(model, f'layer{i}')
+            layer = getattr(model, f"layer{i}")
             for mod in layer.modules():
                 if isinstance(mod, _BatchNorm):
                     self.assertFalse(mod.training)
@@ -123,7 +121,7 @@ class TestSCnet(TestCase):
         self.assertEqual(feat[2].shape, torch.Size([2, 1024, 14, 14]))
 
         # Test SEResNet50 with layers 3 (top feature maps) out forward
-        model = SCNet(50, out_indices=(3, ))
+        model = SCNet(50, out_indices=(3,))
         model.init_weights()
         model.train()
 

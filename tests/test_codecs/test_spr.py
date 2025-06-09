@@ -15,31 +15,29 @@ class TestSPR(TestCase):
         pass
 
     def _make_multi_instance_data(self, data):
-        keypoints = data['keypoints']
-        keypoints_visible = data['keypoints_visible']
+        keypoints = data["keypoints"]
+        keypoints_visible = data["keypoints_visible"]
 
         keypoints_visible[..., 0] = 0
 
         keypoints_outside = keypoints - keypoints.max(axis=-1, keepdims=True)
         keypoints_outside_visible = np.zeros(keypoints_visible.shape)
 
-        keypoint_overlap = keypoints.mean(
-            axis=-1, keepdims=True) + 0.8 * (
-                keypoints - keypoints.mean(axis=-1, keepdims=True))
+        keypoint_overlap = keypoints.mean(axis=-1, keepdims=True) + 0.8 * (
+            keypoints - keypoints.mean(axis=-1, keepdims=True)
+        )
         keypoint_overlap_visible = keypoints_visible
 
-        data['keypoints'] = np.concatenate(
-            (keypoints, keypoints_outside, keypoint_overlap), axis=0)
-        data['keypoints_visible'] = np.concatenate(
-            (keypoints_visible, keypoints_outside_visible,
-             keypoint_overlap_visible),
-            axis=0)
+        data["keypoints"] = np.concatenate((keypoints, keypoints_outside, keypoint_overlap), axis=0)
+        data["keypoints_visible"] = np.concatenate(
+            (keypoints_visible, keypoints_outside_visible, keypoint_overlap_visible), axis=0
+        )
 
         return data
 
     def test_build(self):
         cfg = dict(
-            type='SPR',
+            type="SPR",
             input_size=(512, 512),
             heatmap_size=(128, 128),
             sigma=4,
@@ -58,12 +56,12 @@ class TestSPR(TestCase):
             sigma=4,
         )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        displacements = encoded['displacements']
-        heatmap_weights = encoded['heatmap_weights']
-        displacement_weights = encoded['displacement_weights']
+        heatmaps = encoded["heatmaps"]
+        displacements = encoded["displacements"]
+        heatmap_weights = encoded["heatmap_weights"]
+        displacement_weights = encoded["displacement_weights"]
 
         self.assertEqual(heatmaps.shape, (1, 128, 128))
         self.assertEqual(heatmap_weights.shape, (1, 128, 128))
@@ -86,12 +84,12 @@ class TestSPR(TestCase):
             generate_keypoint_heatmaps=True,
         )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        displacements = encoded['displacements']
-        heatmap_weights = encoded['heatmap_weights']
-        displacement_weights = encoded['displacement_weights']
+        heatmaps = encoded["heatmaps"]
+        displacements = encoded["displacements"]
+        heatmap_weights = encoded["heatmap_weights"]
+        displacement_weights = encoded["displacement_weights"]
 
         self.assertEqual(heatmaps.shape, (18, 128, 128))
         self.assertEqual(heatmap_weights.shape, (18, 128, 128))
@@ -103,25 +101,24 @@ class TestSPR(TestCase):
             codec = SPR(
                 input_size=(512, 512),
                 heatmap_size=(128, 128),
-                sigma=(4, ),
-                root_type='box_center',
+                sigma=(4,),
+                root_type="box_center",
             )
-            encoded = codec.encode(data['keypoints'],
-                                   data['keypoints_visible'])
+            encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
         codec = SPR(
             input_size=(512, 512),
             heatmap_size=(128, 128),
-            sigma=(4, ),
-            root_type='bbox_center',
+            sigma=(4,),
+            root_type="bbox_center",
         )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        displacements = encoded['displacements']
-        heatmap_weights = encoded['heatmap_weights']
-        displacement_weights = encoded['displacement_weights']
+        heatmaps = encoded["heatmaps"]
+        displacements = encoded["displacements"]
+        heatmap_weights = encoded["heatmap_weights"]
+        displacement_weights = encoded["displacement_weights"]
 
         self.assertEqual(heatmaps.shape, (1, 128, 128))
         self.assertEqual(heatmap_weights.shape, (1, 128, 128))
@@ -135,19 +132,17 @@ class TestSPR(TestCase):
         codec = SPR(
             input_size=(512, 512),
             heatmap_size=(128, 128),
-            sigma=(4, ),
+            sigma=(4,),
             generate_keypoint_heatmaps=False,
         )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
-        decoded = codec.decode(
-            to_tensor(encoded['heatmaps']),
-            to_tensor(encoded['displacements']))
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
+        decoded = codec.decode(to_tensor(encoded["heatmaps"]), to_tensor(encoded["displacements"]))
 
         keypoints, (root_scores, keypoint_scores) = decoded
         self.assertIsNone(keypoint_scores)
-        self.assertEqual(keypoints.shape, data['keypoints'].shape)
-        self.assertEqual(root_scores.shape, data['keypoints'].shape[:1])
+        self.assertEqual(keypoints.shape, data["keypoints"].shape)
+        self.assertEqual(root_scores.shape, data["keypoints"].shape[:1])
 
         # decode w/ keypoint heatmaps
         codec = SPR(
@@ -157,16 +152,14 @@ class TestSPR(TestCase):
             generate_keypoint_heatmaps=True,
         )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
-        decoded = codec.decode(
-            to_tensor(encoded['heatmaps']),
-            to_tensor(encoded['displacements']))
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
+        decoded = codec.decode(to_tensor(encoded["heatmaps"]), to_tensor(encoded["displacements"]))
 
         keypoints, (root_scores, keypoint_scores) = decoded
         self.assertIsNotNone(keypoint_scores)
-        self.assertEqual(keypoints.shape, data['keypoints'].shape)
-        self.assertEqual(root_scores.shape, data['keypoints'].shape[:1])
-        self.assertEqual(keypoint_scores.shape, data['keypoints'].shape[:2])
+        self.assertEqual(keypoints.shape, data["keypoints"].shape)
+        self.assertEqual(root_scores.shape, data["keypoints"].shape[:1])
+        self.assertEqual(keypoint_scores.shape, data["keypoints"].shape[:2])
 
     def test_cicular_verification(self):
         data = get_coco_sample(img_shape=(512, 512), num_instances=1)
@@ -174,15 +167,12 @@ class TestSPR(TestCase):
         codec = SPR(
             input_size=(512, 512),
             heatmap_size=(128, 128),
-            sigma=(4, ),
+            sigma=(4,),
             generate_keypoint_heatmaps=False,
         )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
-        decoded = codec.decode(
-            to_tensor(encoded['heatmaps']),
-            to_tensor(encoded['displacements']))
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
+        decoded = codec.decode(to_tensor(encoded["heatmaps"]), to_tensor(encoded["displacements"]))
 
         keypoints, _ = decoded
-        self.assertTrue(
-            np.allclose(to_numpy(keypoints), data['keypoints'], atol=5.))
+        self.assertTrue(np.allclose(to_numpy(keypoints), data["keypoints"], atol=5.0))

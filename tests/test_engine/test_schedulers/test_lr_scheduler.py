@@ -32,22 +32,20 @@ class TestLRScheduler(TestCase):
         self.model = ToyModel()
         lr = 0.05
         self.layer2_mult = 10
-        self.optimizer = optim.SGD([{
-            'params': self.model.conv1.parameters()
-        }, {
-            'params': self.model.conv2.parameters(),
-            'lr': lr * self.layer2_mult,
-        }],
-                                   lr=lr,
-                                   momentum=0.01,
-                                   weight_decay=5e-4)
+        self.optimizer = optim.SGD(
+            [
+                {"params": self.model.conv1.parameters()},
+                {
+                    "params": self.model.conv2.parameters(),
+                    "lr": lr * self.layer2_mult,
+                },
+            ],
+            lr=lr,
+            momentum=0.01,
+            weight_decay=5e-4,
+        )
 
-    def _test_scheduler_value(self,
-                              schedulers,
-                              targets,
-                              epochs=10,
-                              param_name='lr',
-                              step_kwargs=None):
+    def _test_scheduler_value(self, schedulers, targets, epochs=10, param_name="lr", step_kwargs=None):
         if isinstance(schedulers, _ParamScheduler):
             schedulers = [schedulers]
         if step_kwargs is None:
@@ -57,20 +55,17 @@ class TestLRScheduler(TestCase):
             assert len(step_kwargs) == epochs
             assert len(step_kwargs[0]) == len(schedulers)
         for epoch in range(epochs):
-            for param_group, target in zip(self.optimizer.param_groups,
-                                           targets):
+            for param_group, target in zip(self.optimizer.param_groups, targets):
                 assert_allclose(
                     target[epoch],
                     param_group[param_name],
-                    msg='{} is wrong in epoch {}: expected {}, got {}'.format(
-                        param_name, epoch, target[epoch],
-                        param_group[param_name]),
+                    msg="{} is wrong in epoch {}: expected {}, got {}".format(
+                        param_name, epoch, target[epoch], param_group[param_name]
+                    ),
                     atol=1e-5,
-                    rtol=0)
-            [
-                scheduler.step(**step_kwargs[epoch][i])
-                for i, scheduler in enumerate(schedulers)
-            ]
+                    rtol=0,
+                )
+            [scheduler.step(**step_kwargs[epoch][i]) for i, scheduler in enumerate(schedulers)]
 
     def test_constant_scheduler(self):
 
@@ -78,9 +73,7 @@ class TestLRScheduler(TestCase):
         # lr = 0.005    if 5 <= epoch
         epochs = 10
         single_targets = [0.025] * 4 + [0.05] * 6
-        targets = [
-            single_targets, [x * self.layer2_mult for x in single_targets]
-        ]
+        targets = [single_targets, [x * self.layer2_mult for x in single_targets]]
         scheduler = ConstantLR(self.optimizer, factor=1.0 / 2, end=5)
         self._test_scheduler_value(scheduler, targets, epochs)
 

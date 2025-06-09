@@ -14,13 +14,11 @@ from mmpose.testing import get_coco_sample
 class TestAssociativeEmbedding(TestCase):
 
     def setUp(self) -> None:
-        self.decode_keypoint_order = [
-            0, 1, 2, 3, 4, 5, 6, 11, 12, 7, 8, 9, 10, 13, 14, 15, 16
-        ]
+        self.decode_keypoint_order = [0, 1, 2, 3, 4, 5, 6, 11, 12, 7, 8, 9, 10, 13, 14, 15, 16]
 
     def test_build(self):
         cfg = dict(
-            type='AssociativeEmbedding',
+            type="AssociativeEmbedding",
             input_size=(256, 256),
             heatmap_size=(64, 64),
             use_udp=False,
@@ -37,13 +35,14 @@ class TestAssociativeEmbedding(TestCase):
             input_size=(256, 256),
             heatmap_size=(64, 64),
             use_udp=False,
-            decode_keypoint_order=self.decode_keypoint_order)
+            decode_keypoint_order=self.decode_keypoint_order,
+        )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        keypoint_indices = encoded['keypoint_indices']
-        keypoint_weights = encoded['keypoint_weights']
+        heatmaps = encoded["heatmaps"]
+        keypoint_indices = encoded["keypoint_indices"]
+        keypoint_weights = encoded["keypoint_weights"]
 
         self.assertEqual(heatmaps.shape, (17, 64, 64))
         self.assertEqual(keypoint_indices.shape, (1, 17, 2))
@@ -56,16 +55,14 @@ class TestAssociativeEmbedding(TestCase):
 
         # w/ UDP
         codec = AssociativeEmbedding(
-            input_size=(256, 256),
-            heatmap_size=(64, 64),
-            use_udp=True,
-            decode_keypoint_order=self.decode_keypoint_order)
+            input_size=(256, 256), heatmap_size=(64, 64), use_udp=True, decode_keypoint_order=self.decode_keypoint_order
+        )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        keypoint_indices = encoded['keypoint_indices']
-        keypoint_weights = encoded['keypoint_weights']
+        heatmaps = encoded["heatmaps"]
+        keypoint_indices = encoded["keypoint_indices"]
+        keypoint_weights = encoded["keypoint_weights"]
 
         self.assertEqual(heatmaps.shape, (17, 64, 64))
         self.assertEqual(keypoint_indices.shape, (1, 17, 2))
@@ -76,11 +73,7 @@ class TestAssociativeEmbedding(TestCase):
             index_encoded = keypoint_indices[0, k, 0]
             self.assertEqual(index_expected, index_encoded)
 
-    def _get_tags(self,
-                  heatmaps,
-                  keypoint_indices,
-                  tag_per_keypoint: bool,
-                  tag_dim: int = 1):
+    def _get_tags(self, heatmaps, keypoint_indices, tag_per_keypoint: bool, tag_dim: int = 1):
 
         K, H, W = heatmaps.shape
         N = keypoint_indices.shape[0]
@@ -111,9 +104,7 @@ class TestAssociativeEmbedding(TestCase):
             np.ndarray: Sorted predictions
         """
         assert keypoints_gt.shape == keypoints_pred.shape
-        costs = np.linalg.norm(
-            keypoints_gt[None] - keypoints_pred[:, None], ord=2,
-            axis=3).mean(axis=2)
+        costs = np.linalg.norm(keypoints_gt[None] - keypoints_pred[:, None], ord=2, axis=3).mean(axis=2)
         match = Munkres().compute(costs)
         keypoints_pred_sorted = np.zeros_like(keypoints_pred)
         scores_pred_sorted = np.zeros_like(scores_pred)
@@ -124,119 +115,106 @@ class TestAssociativeEmbedding(TestCase):
         return keypoints_pred_sorted, scores_pred_sorted
 
     def test_decode(self):
-        data = get_coco_sample(
-            img_shape=(256, 256), num_instances=2, non_occlusion=True)
+        data = get_coco_sample(img_shape=(256, 256), num_instances=2, non_occlusion=True)
 
         # w/o UDP
         codec = AssociativeEmbedding(
             input_size=(256, 256),
             heatmap_size=(64, 64),
             use_udp=False,
-            decode_keypoint_order=self.decode_keypoint_order)
+            decode_keypoint_order=self.decode_keypoint_order,
+        )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        keypoint_indices = encoded['keypoint_indices']
+        heatmaps = encoded["heatmaps"]
+        keypoint_indices = encoded["keypoint_indices"]
 
-        tags = self._get_tags(
-            heatmaps, keypoint_indices, tag_per_keypoint=True)
+        tags = self._get_tags(heatmaps, keypoint_indices, tag_per_keypoint=True)
 
         # to Tensor
         batch_heatmaps = torch.from_numpy(heatmaps[None])
         batch_tags = torch.from_numpy(tags[None])
 
-        batch_keypoints, batch_keypoint_scores, batch_instance_scores = \
-            codec.batch_decode(batch_heatmaps, batch_tags)
+        batch_keypoints, batch_keypoint_scores, batch_instance_scores = codec.batch_decode(batch_heatmaps, batch_tags)
 
         self.assertIsInstance(batch_keypoints, list)
         self.assertIsInstance(batch_keypoint_scores, list)
         self.assertEqual(len(batch_keypoints), 1)
         self.assertEqual(len(batch_keypoint_scores), 1)
 
-        keypoints, scores = self._sort_preds(batch_keypoints[0],
-                                             batch_keypoint_scores[0],
-                                             data['keypoints'])
+        keypoints, scores = self._sort_preds(batch_keypoints[0], batch_keypoint_scores[0], data["keypoints"])
 
         self.assertIsInstance(keypoints, np.ndarray)
         self.assertIsInstance(scores, np.ndarray)
         self.assertEqual(keypoints.shape, (2, 17, 2))
         self.assertEqual(scores.shape, (2, 17))
 
-        self.assertTrue(np.allclose(keypoints, data['keypoints'], atol=4.0))
+        self.assertTrue(np.allclose(keypoints, data["keypoints"], atol=4.0))
 
         # w/o UDP, tag_imd=2
         codec = AssociativeEmbedding(
             input_size=(256, 256),
             heatmap_size=(64, 64),
             use_udp=False,
-            decode_keypoint_order=self.decode_keypoint_order)
+            decode_keypoint_order=self.decode_keypoint_order,
+        )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        keypoint_indices = encoded['keypoint_indices']
+        heatmaps = encoded["heatmaps"]
+        keypoint_indices = encoded["keypoint_indices"]
 
-        tags = self._get_tags(
-            heatmaps, keypoint_indices, tag_per_keypoint=True, tag_dim=2)
+        tags = self._get_tags(heatmaps, keypoint_indices, tag_per_keypoint=True, tag_dim=2)
 
         # to Tensor
         batch_heatmaps = torch.from_numpy(heatmaps[None])
         batch_tags = torch.from_numpy(tags[None])
 
-        batch_keypoints, batch_keypoint_scores, batch_instance_scores = \
-            codec.batch_decode(batch_heatmaps, batch_tags)
+        batch_keypoints, batch_keypoint_scores, batch_instance_scores = codec.batch_decode(batch_heatmaps, batch_tags)
 
         self.assertIsInstance(batch_keypoints, list)
         self.assertIsInstance(batch_keypoint_scores, list)
         self.assertEqual(len(batch_keypoints), 1)
         self.assertEqual(len(batch_keypoint_scores), 1)
 
-        keypoints, scores = self._sort_preds(batch_keypoints[0],
-                                             batch_keypoint_scores[0],
-                                             data['keypoints'])
+        keypoints, scores = self._sort_preds(batch_keypoints[0], batch_keypoint_scores[0], data["keypoints"])
 
         self.assertIsInstance(keypoints, np.ndarray)
         self.assertIsInstance(scores, np.ndarray)
         self.assertEqual(keypoints.shape, (2, 17, 2))
         self.assertEqual(scores.shape, (2, 17))
 
-        self.assertTrue(np.allclose(keypoints, data['keypoints'], atol=4.0))
+        self.assertTrue(np.allclose(keypoints, data["keypoints"], atol=4.0))
 
         # w/ UDP
         codec = AssociativeEmbedding(
-            input_size=(256, 256),
-            heatmap_size=(64, 64),
-            use_udp=True,
-            decode_keypoint_order=self.decode_keypoint_order)
+            input_size=(256, 256), heatmap_size=(64, 64), use_udp=True, decode_keypoint_order=self.decode_keypoint_order
+        )
 
-        encoded = codec.encode(data['keypoints'], data['keypoints_visible'])
+        encoded = codec.encode(data["keypoints"], data["keypoints_visible"])
 
-        heatmaps = encoded['heatmaps']
-        keypoint_indices = encoded['keypoint_indices']
+        heatmaps = encoded["heatmaps"]
+        keypoint_indices = encoded["keypoint_indices"]
 
-        tags = self._get_tags(
-            heatmaps, keypoint_indices, tag_per_keypoint=True)
+        tags = self._get_tags(heatmaps, keypoint_indices, tag_per_keypoint=True)
 
         # to Tensor
         batch_heatmaps = torch.from_numpy(heatmaps[None])
         batch_tags = torch.from_numpy(tags[None])
 
-        batch_keypoints, batch_keypoint_scores, batch_instance_scores = \
-            codec.batch_decode(batch_heatmaps, batch_tags)
+        batch_keypoints, batch_keypoint_scores, batch_instance_scores = codec.batch_decode(batch_heatmaps, batch_tags)
 
         self.assertIsInstance(batch_keypoints, list)
         self.assertIsInstance(batch_keypoint_scores, list)
         self.assertEqual(len(batch_keypoints), 1)
         self.assertEqual(len(batch_keypoint_scores), 1)
 
-        keypoints, scores = self._sort_preds(batch_keypoints[0],
-                                             batch_keypoint_scores[0],
-                                             data['keypoints'])
+        keypoints, scores = self._sort_preds(batch_keypoints[0], batch_keypoint_scores[0], data["keypoints"])
 
         self.assertIsInstance(keypoints, np.ndarray)
         self.assertIsInstance(scores, np.ndarray)
         self.assertEqual(keypoints.shape, (2, 17, 2))
         self.assertEqual(scores.shape, (2, 17))
 
-        self.assertTrue(np.allclose(keypoints, data['keypoints'], atol=4.0))
+        self.assertTrue(np.allclose(keypoints, data["keypoints"], atol=4.0))

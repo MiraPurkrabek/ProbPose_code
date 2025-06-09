@@ -18,24 +18,19 @@ class TestIntegralRegressionHead(TestCase):
         feat_shapes: List[Tuple[int, int, int]] = [(32, 6, 8)],
     ):
 
-        feats = [
-            torch.rand((batch_size, ) + shape, dtype=torch.float32)
-            for shape in feat_shapes
-        ]
+        feats = [torch.rand((batch_size,) + shape, dtype=torch.float32) for shape in feat_shapes]
 
         return feats
 
     def test_init(self):
         # square heatmap
-        head = IntegralRegressionHead(
-            in_channels=32, in_featuremap_size=(8, 8), num_joints=17)
+        head = IntegralRegressionHead(in_channels=32, in_featuremap_size=(8, 8), num_joints=17)
         self.assertEqual(head.linspace_x.shape, (1, 1, 1, 64))
         self.assertEqual(head.linspace_y.shape, (1, 1, 64, 1))
         self.assertIsNone(head.decoder)
 
         # rectangle heatmap
-        head = IntegralRegressionHead(
-            in_channels=32, in_featuremap_size=(6, 8), num_joints=17)
+        head = IntegralRegressionHead(in_channels=32, in_featuremap_size=(6, 8), num_joints=17)
         self.assertEqual(head.linspace_x.shape, (1, 1, 1, 6 * 8))
         self.assertEqual(head.linspace_y.shape, (1, 1, 8 * 8, 1))
         self.assertIsNone(head.decoder)
@@ -47,8 +42,8 @@ class TestIntegralRegressionHead(TestCase):
             num_joints=17,
             deconv_out_channels=(32, 32),
             deconv_kernel_sizes=(4, 4),
-            conv_out_channels=(32, ),
-            conv_kernel_sizes=(1, ),
+            conv_out_channels=(32,),
+            conv_kernel_sizes=(1,),
         )
         self.assertEqual(head.linspace_x.shape, (1, 1, 1, 6 * 4))
         self.assertEqual(head.linspace_y.shape, (1, 1, 8 * 4, 1))
@@ -61,8 +56,8 @@ class TestIntegralRegressionHead(TestCase):
             num_joints=17,
             deconv_out_channels=(32, 32),
             deconv_kernel_sizes=(4, 4),
-            conv_out_channels=(32, ),
-            conv_kernel_sizes=(1, ),
+            conv_out_channels=(32,),
+            conv_kernel_sizes=(1,),
             final_layer=None,
         )
         self.assertEqual(head.linspace_x.shape, (1, 1, 1, 6 * 4))
@@ -100,12 +95,12 @@ class TestIntegralRegressionHead(TestCase):
             in_channels=1024,
             in_featuremap_size=(6, 8),
             num_joints=17,
-            decoder=dict(type='RegressionLabel', input_size=(192, 256)),
+            decoder=dict(type="RegressionLabel", input_size=(192, 256)),
         )
         self.assertIsNotNone(head.decoder)
 
     def test_predict(self):
-        decoder_cfg = dict(type='RegressionLabel', input_size=(192, 256))
+        decoder_cfg = dict(type="RegressionLabel", input_size=(192, 256))
 
         head = IntegralRegressionHead(
             in_channels=32,
@@ -115,14 +110,12 @@ class TestIntegralRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 8, 6)])
-        batch_data_samples = get_packed_inputs(
-            batch_size=2, with_heatmap=False)['data_samples']
+        batch_data_samples = get_packed_inputs(batch_size=2, with_heatmap=False)["data_samples"]
         preds = head.predict(feats, batch_data_samples)
 
         self.assertTrue(len(preds), 2)
         self.assertIsInstance(preds[0], InstanceData)
-        self.assertEqual(preds[0].keypoints.shape,
-                         batch_data_samples[0].gt_instances.keypoints.shape)
+        self.assertEqual(preds[0].keypoints.shape, batch_data_samples[0].gt_instances.keypoints.shape)
 
         # output heatmap
         head = IntegralRegressionHead(
@@ -133,17 +126,15 @@ class TestIntegralRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 8, 6)])
-        batch_data_samples = get_packed_inputs(
-            batch_size=2, with_heatmap=False)['data_samples']
-        _, pred_heatmaps = head.predict(
-            feats, batch_data_samples, test_cfg=dict(output_heatmaps=True))
+        batch_data_samples = get_packed_inputs(batch_size=2, with_heatmap=False)["data_samples"]
+        _, pred_heatmaps = head.predict(feats, batch_data_samples, test_cfg=dict(output_heatmaps=True))
 
         self.assertTrue(len(pred_heatmaps), 2)
         self.assertIsInstance(pred_heatmaps[0], PixelData)
         self.assertEqual(pred_heatmaps[0].heatmaps.shape, (17, 8 * 8, 6 * 8))
 
     def test_tta(self):
-        decoder_cfg = dict(type='RegressionLabel', input_size=(192, 256))
+        decoder_cfg = dict(type="RegressionLabel", input_size=(192, 256))
 
         # inputs transform: select
         head = IntegralRegressionHead(
@@ -154,19 +145,14 @@ class TestIntegralRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 8, 6)])
-        batch_data_samples = get_packed_inputs(
-            batch_size=2, with_heatmap=False)['data_samples']
-        preds = head.predict([feats, feats],
-                             batch_data_samples,
-                             test_cfg=dict(
-                                 flip_test=True,
-                                 shift_coords=True,
-                                 shift_heatmap=True))
+        batch_data_samples = get_packed_inputs(batch_size=2, with_heatmap=False)["data_samples"]
+        preds = head.predict(
+            [feats, feats], batch_data_samples, test_cfg=dict(flip_test=True, shift_coords=True, shift_heatmap=True)
+        )
 
         self.assertTrue(len(preds), 2)
         self.assertIsInstance(preds[0], InstanceData)
-        self.assertEqual(preds[0].keypoints.shape,
-                         batch_data_samples[0].gt_instances.keypoints.shape)
+        self.assertEqual(preds[0].keypoints.shape, batch_data_samples[0].gt_instances.keypoints.shape)
 
     def test_loss(self):
         head = IntegralRegressionHead(
@@ -176,13 +162,13 @@ class TestIntegralRegressionHead(TestCase):
         )
 
         feats = self._get_feats(batch_size=2, feat_shapes=[(32, 8, 6)])
-        batch_data_samples = get_packed_inputs(batch_size=2)['data_samples']
+        batch_data_samples = get_packed_inputs(batch_size=2)["data_samples"]
         losses = head.loss(feats, batch_data_samples)
 
-        self.assertIsInstance(losses['loss_kpt'], torch.Tensor)
-        self.assertEqual(losses['loss_kpt'].shape, torch.Size())
-        self.assertIsInstance(losses['acc_pose'], torch.Tensor)
+        self.assertIsInstance(losses["loss_kpt"], torch.Tensor)
+        self.assertEqual(losses["loss_kpt"].shape, torch.Size())
+        self.assertIsInstance(losses["acc_pose"], torch.Tensor)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

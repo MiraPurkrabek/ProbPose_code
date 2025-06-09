@@ -21,8 +21,7 @@ class TestTCN(TestCase):
         with self.assertRaises(AssertionError):
             # when use_stride_conv is True, shift + kernel_size // 2 should
             # not be larger than x.shape[2]
-            block = BasicTemporalBlock(
-                1024, 1024, kernel_size=5, causal=True, use_stride_conv=True)
+            block = BasicTemporalBlock(1024, 1024, kernel_size=5, causal=True, use_stride_conv=True)
             x = torch.rand(2, 1024, 3)
             x_out = block(x)
 
@@ -51,8 +50,7 @@ class TestTCN(TestCase):
         self.assertEqual(x_out.shape, torch.Size([2, 1024, 27]))
 
         # BasicTemporalBlock with use_stride_conv == True and causal == True
-        block = BasicTemporalBlock(
-            1024, 1024, use_stride_conv=True, causal=True)
+        block = BasicTemporalBlock(1024, 1024, use_stride_conv=True, causal=True)
         x = torch.rand(2, 1024, 81)
         x_out = block(x)
         self.assertEqual(x_out.shape, torch.Size([2, 1024, 27]))
@@ -76,11 +74,7 @@ class TestTCN(TestCase):
 
         # Test TCN with 4 blocks and weight norm clip
         max_norm = 0.1
-        model = TCN(
-            in_channels=34,
-            num_blocks=4,
-            kernel_sizes=(3, 3, 3, 3, 3),
-            max_norm=max_norm)
+        model = TCN(in_channels=34, num_blocks=4, kernel_sizes=(3, 3, 3, 3, 3), max_norm=max_norm)
         pose2d = torch.rand((2, 34, 243))
         feat = model(pose2d)
         self.assertEqual(len(feat), 4)
@@ -92,15 +86,10 @@ class TestTCN(TestCase):
         for module in model.modules():
             if isinstance(module, torch.nn.modules.conv._ConvNd):
                 norm = module.weight.norm().item()
-                np.testing.assert_allclose(
-                    np.maximum(norm, max_norm), max_norm, rtol=1e-4)
+                np.testing.assert_allclose(np.maximum(norm, max_norm), max_norm, rtol=1e-4)
 
         # Test TCN with 4 blocks (use_stride_conv == True)
-        model = TCN(
-            in_channels=34,
-            num_blocks=4,
-            kernel_sizes=(3, 3, 3, 3, 3),
-            use_stride_conv=True)
+        model = TCN(in_channels=34, num_blocks=4, kernel_sizes=(3, 3, 3, 3, 3), use_stride_conv=True)
         pose2d = torch.rand((2, 34, 243))
         feat = model(pose2d)
         self.assertEqual(len(feat), 4)
@@ -112,13 +101,8 @@ class TestTCN(TestCase):
         # Check that the model w. or w/o use_stride_conv will have the same
         # output and gradient after a forward+backward pass
         model1 = TCN(
-            in_channels=34,
-            stem_channels=4,
-            num_blocks=1,
-            kernel_sizes=(3, 3),
-            dropout=0,
-            residual=False,
-            norm_cfg=None)
+            in_channels=34, stem_channels=4, num_blocks=1, kernel_sizes=(3, 3), dropout=0, residual=False, norm_cfg=None
+        )
         model2 = TCN(
             in_channels=34,
             stem_channels=4,
@@ -127,7 +111,8 @@ class TestTCN(TestCase):
             dropout=0,
             residual=False,
             norm_cfg=None,
-            use_stride_conv=True)
+            use_stride_conv=True,
+        )
         for m in model1.modules():
             if isinstance(m, nn.Conv1d):
                 nn.init.constant_(m.weight, 0.5)
@@ -153,5 +138,4 @@ class TestTCN(TestCase):
         loss2.backward()
         for m1, m2 in zip(model1.modules(), model2.modules()):
             if isinstance(m1, nn.Conv1d):
-                self.assertTrue(
-                    torch.isclose(m1.weight.grad, m2.weight.grad).all())
+                self.assertTrue(torch.isclose(m1.weight.grad, m2.weight.grad).all())

@@ -14,7 +14,7 @@ class TestShufflenetV2(TestCase):
     @staticmethod
     def is_block(modules):
         """Check if is ResNet building block."""
-        if isinstance(modules, (InvertedResidual, )):
+        if isinstance(modules, (InvertedResidual,)):
             return True
         return False
 
@@ -72,7 +72,7 @@ class TestShufflenetV2(TestCase):
 
         with self.assertRaises(ValueError):
             # out_indices must be in [0, 1, 2, 3]
-            ShuffleNetV2(widen_factor=1.0, out_indices=(4, ))
+            ShuffleNetV2(widen_factor=1.0, out_indices=(4,))
 
         with self.assertRaises(TypeError):
             # init_weights must have no parameter
@@ -172,7 +172,7 @@ class TestShufflenetV2(TestCase):
         self.assertEqual(feat[2].shape, torch.Size((1, 976, 7, 7)))
 
         # Test ShuffleNetV2 forward with layers 3 forward
-        model = ShuffleNetV2(widen_factor=1.0, out_indices=(2, ))
+        model = ShuffleNetV2(widen_factor=1.0, out_indices=(2,))
         model.init_weights()
         model.train()
 

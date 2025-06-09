@@ -17,22 +17,22 @@ import sys
 
 import pytorch_sphinx_theme
 
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
-project = 'MMPose'
-copyright = '2020-2021, OpenMMLab'
-author = 'MMPose Authors'
+project = "MMPose"
+copyright = "2020-2021, OpenMMLab"
+author = "MMPose Authors"
 
 # The full version, including alpha/beta/rc tags
-version_file = '../../mmpose/version.py'
+version_file = "../../mmpose/version.py"
 
 
 def get_version():
-    with open(version_file, 'r') as f:
-        exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
+    with open(version_file, "r") as f:
+        exec(compile(f.read(), version_file, "exec"))
+    return locals()["__version__"]
 
 
 release = get_version()
@@ -43,69 +43,69 @@ release = get_version()
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.viewcode',
-    'sphinx_markdown_tables', 'sphinx_copybutton', 'myst_parser',
-    'sphinx.ext.autosummary'
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx_markdown_tables",
+    "sphinx_copybutton",
+    "myst_parser",
+    "sphinx.ext.autosummary",
 ]
 
-autodoc_mock_imports = ['json_tricks', 'mmpose.version']
+autodoc_mock_imports = ["json_tricks", "mmpose.version"]
 
 # Ignore >>> when copying code
-copybutton_prompt_text = r'>>> |\.\.\. '
+copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
+    ".rst": "restructuredtext",
+    ".md": "markdown",
 }
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'pytorch_sphinx_theme'
+html_theme = "pytorch_sphinx_theme"
 html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
 html_theme_options = {
-    'menu': [
-        {
-            'name': 'GitHub',
-            'url': 'https://github.com/open-mmlab/mmpose/tree/main'
-        },
+    "menu": [
+        {"name": "GitHub", "url": "https://github.com/open-mmlab/mmpose/tree/main"},
     ],
     # Specify the language of the shared menu
-    'menu_lang':
-    'en'
+    "menu_lang": "en",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 
-language = 'en'
+language = "en"
 
-html_static_path = ['_static']
-html_css_files = ['css/readthedocs.css']
+html_static_path = ["_static"]
+html_css_files = ["css/readthedocs.css"]
 
 # Enable ::: for my_st
-myst_enable_extensions = ['colon_fence']
+myst_enable_extensions = ["colon_fence"]
 
-master_doc = 'index'
+master_doc = "index"
 
 
 def builder_inited_handler(app):
-    subprocess.run(['python', './collect_modelzoo.py'])
-    subprocess.run(['python', './collect_projects.py'])
-    subprocess.run(['sh', './merge_docs.sh'])
-    subprocess.run(['python', './stats.py'])
+    subprocess.run(["python", "./collect_modelzoo.py"])
+    subprocess.run(["python", "./collect_projects.py"])
+    subprocess.run(["sh", "./merge_docs.sh"])
+    subprocess.run(["python", "./stats.py"])
 
 
 def setup(app):
-    app.connect('builder-inited', builder_inited_handler)
+    app.connect("builder-inited", builder_inited_handler)

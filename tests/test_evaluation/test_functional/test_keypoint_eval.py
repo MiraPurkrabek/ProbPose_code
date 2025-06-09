@@ -4,11 +4,15 @@ from unittest import TestCase
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-from mmpose.evaluation.functional import (keypoint_auc, keypoint_epe,
-                                          keypoint_mpjpe, keypoint_nme,
-                                          keypoint_pck_accuracy,
-                                          multilabel_classification_accuracy,
-                                          pose_pck_accuracy)
+from mmpose.evaluation.functional import (
+    keypoint_auc,
+    keypoint_epe,
+    keypoint_mpjpe,
+    keypoint_nme,
+    keypoint_pck_accuracy,
+    multilabel_classification_accuracy,
+    pose_pck_accuracy,
+)
 
 
 class TestKeypointEval(TestCase):
@@ -17,8 +21,7 @@ class TestKeypointEval(TestCase):
 
         output = np.zeros((2, 5, 2))
         target = np.zeros((2, 5, 2))
-        mask = np.array([[True, True, False, True, True],
-                         [True, True, False, True, True]])
+        mask = np.array([[True, True, False, True, True], [True, True, False, True, True]])
 
         # first channel
         output[0, 0] = [10, 0]
@@ -38,22 +41,18 @@ class TestKeypointEval(TestCase):
 
         thr = np.full((2, 2), 10, dtype=np.float32)
 
-        acc, avg_acc, cnt = keypoint_pck_accuracy(output, target, mask, 0.5,
-                                                  thr)
+        acc, avg_acc, cnt = keypoint_pck_accuracy(output, target, mask, 0.5, thr)
 
         assert_array_almost_equal(acc, np.array([1, 0.5, -1, 1, 1]), decimal=4)
         self.assertAlmostEqual(avg_acc, 0.875, delta=1e-4)
         self.assertAlmostEqual(cnt, 4, delta=1e-4)
 
-        acc, avg_acc, cnt = keypoint_pck_accuracy(output, target, mask, 0.5,
-                                                  np.zeros((2, 2)))
-        assert_array_almost_equal(
-            acc, np.array([-1, -1, -1, -1, -1]), decimal=4)
+        acc, avg_acc, cnt = keypoint_pck_accuracy(output, target, mask, 0.5, np.zeros((2, 2)))
+        assert_array_almost_equal(acc, np.array([-1, -1, -1, -1, -1]), decimal=4)
         self.assertAlmostEqual(avg_acc, 0, delta=1e-4)
         self.assertAlmostEqual(cnt, 0, delta=1e-4)
 
-        acc, avg_acc, cnt = keypoint_pck_accuracy(output, target, mask, 0.5,
-                                                  np.array([[0, 0], [10, 10]]))
+        acc, avg_acc, cnt = keypoint_pck_accuracy(output, target, mask, 0.5, np.array([[0, 0], [10, 10]]))
         assert_array_almost_equal(acc, np.array([1, 1, -1, 1, 1]), decimal=4)
         self.assertAlmostEqual(avg_acc, 1, delta=1e-4)
         self.assertAlmostEqual(cnt, 4, delta=1e-4)
@@ -170,8 +169,7 @@ class TestKeypointEval(TestCase):
     def test_keypoint_mpjpe(self):
         output = np.zeros((2, 5, 3))
         target = np.zeros((2, 5, 3))
-        mask = np.array([[True, True, False, True, True],
-                         [True, True, False, True, True]])
+        mask = np.array([[True, True, False, True, True], [True, True, False, True, True]])
 
         # first channel
         output[0, 0] = [1, 0, 0]
@@ -202,11 +200,11 @@ class TestKeypointEval(TestCase):
         mpjpe = keypoint_mpjpe(output, target, mask)
         self.assertAlmostEqual(mpjpe, 0.9625211990796929, delta=1e-4)
 
-        p_mpjpe = keypoint_mpjpe(output, target, mask, 'procrustes')
+        p_mpjpe = keypoint_mpjpe(output, target, mask, "procrustes")
         self.assertAlmostEqual(p_mpjpe, 1.0047897634604497, delta=1e-4)
 
-        s_mpjpe = keypoint_mpjpe(output, target, mask, 'scale')
+        s_mpjpe = keypoint_mpjpe(output, target, mask, "scale")
         self.assertAlmostEqual(s_mpjpe, 1.0277129678465953, delta=1e-4)
 
         with self.assertRaises(ValueError):
-            _ = keypoint_mpjpe(output, target, mask, 'alignment')
+            _ = keypoint_mpjpe(output, target, mask, "alignment")

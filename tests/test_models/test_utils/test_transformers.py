@@ -11,7 +11,7 @@ class TestSinePositionalEncoding(TestCase):
     def test_init(self):
 
         spe = SinePositionalEncoding(out_channels=128)
-        self.assertTrue(hasattr(spe, 'dim_t'))
+        self.assertTrue(hasattr(spe, "dim_t"))
         self.assertFalse(spe.dim_t.requires_grad)
         self.assertEqual(spe.dim_t.size(0), 128 // 2)
 
@@ -19,14 +19,12 @@ class TestSinePositionalEncoding(TestCase):
         self.assertTrue(spe.dim_t.requires_grad)
 
         spe = SinePositionalEncoding(out_channels=128, eval_size=10)
-        self.assertTrue(hasattr(spe, 'pos_enc_10'))
+        self.assertTrue(hasattr(spe, "pos_enc_10"))
         self.assertEqual(spe.pos_enc_10.size(-1), 128)
 
-        spe = SinePositionalEncoding(
-            out_channels=128, eval_size=(2, 3), spatial_dim=2)
-        self.assertTrue(hasattr(spe, 'pos_enc_(2, 3)'))
-        self.assertSequenceEqual(
-            getattr(spe, 'pos_enc_(2, 3)').shape[-2:], (128, 2))
+        spe = SinePositionalEncoding(out_channels=128, eval_size=(2, 3), spatial_dim=2)
+        self.assertTrue(hasattr(spe, "pos_enc_(2, 3)"))
+        self.assertSequenceEqual(getattr(spe, "pos_enc_(2, 3)").shape[-2:], (128, 2))
 
     def test_generate_speoding(self):
 
@@ -66,16 +64,14 @@ class TestSinePositionalEncoding(TestCase):
         spe = SinePositionalEncoding(out_channels=128)
         pos_enc = spe.generate_pos_encoding(size=10)
         feature = torch.randn(2, 3, 10, 128)
-        out_feature = spe.apply_additional_pos_enc(feature, pos_enc,
-                                                   spe.spatial_dim)
+        out_feature = spe.apply_additional_pos_enc(feature, pos_enc, spe.spatial_dim)
         self.assertSequenceEqual(feature.shape, out_feature.shape)
 
         # spatial_dim = 2
         spe = SinePositionalEncoding(out_channels=128 // 2, spatial_dim=2)
         pos_enc = spe.generate_pos_encoding(size=(2, 5))
         feature = torch.randn(2, 3, 10, 128)
-        out_feature = spe.apply_additional_pos_enc(feature, pos_enc,
-                                                   spe.spatial_dim)
+        out_feature = spe.apply_additional_pos_enc(feature, pos_enc, spe.spatial_dim)
         self.assertSequenceEqual(feature.shape, out_feature.shape)
 
     def test_apply_rotary_pos_enc(self):
@@ -84,16 +80,14 @@ class TestSinePositionalEncoding(TestCase):
         spe = SinePositionalEncoding(out_channels=128)
         pos_enc = spe.generate_pos_encoding(size=10)
         feature = torch.randn(2, 3, 10, 128)
-        out_feature = spe.apply_rotary_pos_enc(feature, pos_enc,
-                                               spe.spatial_dim)
+        out_feature = spe.apply_rotary_pos_enc(feature, pos_enc, spe.spatial_dim)
         self.assertSequenceEqual(feature.shape, out_feature.shape)
 
         # spatial_dim = 2
         spe = SinePositionalEncoding(out_channels=128, spatial_dim=2)
         pos_enc = spe.generate_pos_encoding(size=(2, 5))
         feature = torch.randn(2, 3, 10, 128)
-        out_feature = spe.apply_rotary_pos_enc(feature, pos_enc,
-                                               spe.spatial_dim)
+        out_feature = spe.apply_rotary_pos_enc(feature, pos_enc, spe.spatial_dim)
         self.assertSequenceEqual(feature.shape, out_feature.shape)
 
 
@@ -104,7 +98,7 @@ class TestGAUEncoder(TestCase):
         self.assertTrue(gau.shortcut)
 
         gau = GAUEncoder(in_token_dims=64, out_token_dims=64, dropout_rate=0.5)
-        self.assertTrue(hasattr(gau, 'dropout'))
+        self.assertTrue(hasattr(gau, "dropout"))
 
     def test_forward(self):
         gau = GAUEncoder(in_token_dims=64, out_token_dims=64)
@@ -126,8 +120,7 @@ class TestGAUEncoder(TestCase):
         self.assertSequenceEqual(feat.shape, out_feat.shape)
 
         # positional encoding
-        gau = GAUEncoder(
-            s=32, in_token_dims=64, out_token_dims=64, pos_enc=True)
+        gau = GAUEncoder(s=32, in_token_dims=64, out_token_dims=64, pos_enc=True)
         feat = torch.randn(2, 3, 64)
         spe = SinePositionalEncoding(out_channels=32)
         pos_enc = spe.generate_pos_encoding(size=3)
@@ -135,12 +128,7 @@ class TestGAUEncoder(TestCase):
             out_feat = gau.forward(feat, pos_enc=pos_enc)
         self.assertSequenceEqual(feat.shape, out_feat.shape)
 
-        gau = GAUEncoder(
-            s=32,
-            in_token_dims=64,
-            out_token_dims=64,
-            pos_enc=True,
-            spatial_dim=2)
+        gau = GAUEncoder(s=32, in_token_dims=64, out_token_dims=64, pos_enc=True, spatial_dim=2)
         feat = torch.randn(1, 2, 6, 64)
         spe = SinePositionalEncoding(out_channels=32, spatial_dim=2)
         pos_enc = spe.generate_pos_encoding(size=(2, 3))

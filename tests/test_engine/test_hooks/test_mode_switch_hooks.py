@@ -28,11 +28,11 @@ class DummyDataset(Dataset):
 
 
 pipeline1 = [
-    dict(type='RandomHalfBody'),
+    dict(type="RandomHalfBody"),
 ]
 
 pipeline2 = [
-    dict(type='RandomFlip'),
+    dict(type="RandomFlip"),
 ]
 register_all_modules()
 
@@ -41,10 +41,8 @@ class TestYOLOXPoseModeSwitchHook(TestCase):
 
     def test(self):
         train_dataloader = dict(
-            dataset=DummyDataset(),
-            sampler=dict(type='DefaultSampler', shuffle=True),
-            batch_size=3,
-            num_workers=0)
+            dataset=DummyDataset(), sampler=dict(type="DefaultSampler", shuffle=True), batch_size=3, num_workers=0
+        )
 
         runner = Mock()
         runner.model = Mock()
@@ -55,16 +53,14 @@ class TestYOLOXPoseModeSwitchHook(TestCase):
         runner.train_dataloader = Runner.build_dataloader(train_dataloader)
         runner.train_dataloader.dataset.pipeline = pipeline1
 
-        hook = YOLOXPoseModeSwitchHook(
-            num_last_epochs=15, new_train_pipeline=pipeline2)
+        hook = YOLOXPoseModeSwitchHook(num_last_epochs=15, new_train_pipeline=pipeline2)
 
         # test after change mode
         runner.epoch = 284
         runner.max_epochs = 300
         hook.before_train_epoch(runner)
         self.assertTrue(runner.model.bbox_head.use_aux_loss)
-        self.assertEqual(runner.train_loop.dataloader.dataset.pipeline,
-                         pipeline2)
+        self.assertEqual(runner.train_loop.dataloader.dataset.pipeline, pipeline2)
 
 
 class TestRTMOModeSwitchHook(TestCase):
@@ -79,14 +75,7 @@ class TestRTMOModeSwitchHook(TestCase):
         runner.model.head.attr1 = False
         runner.model.head.loss.attr2 = 1.0
 
-        hook = RTMOModeSwitchHook(epoch_attributes={
-            0: {
-                'attr1': True
-            },
-            10: {
-                'loss.attr2': 0.5
-            }
-        })
+        hook = RTMOModeSwitchHook(epoch_attributes={0: {"attr1": True}, 10: {"loss.attr2": 0.5}})
 
         # test after change mode
         runner.epoch = 0

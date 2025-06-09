@@ -31,8 +31,8 @@ class RegressionLabel(BaseKeypointCodec):
     """
 
     label_mapping_table = dict(
-        keypoint_labels='keypoint_labels',
-        keypoint_weights='keypoint_weights',
+        keypoint_labels="keypoint_labels",
+        keypoint_weights="keypoint_weights",
     )
 
     def __init__(self, input_size: Tuple[int, int]) -> None:
@@ -40,9 +40,7 @@ class RegressionLabel(BaseKeypointCodec):
 
         self.input_size = input_size
 
-    def encode(self,
-               keypoints: np.ndarray,
-               keypoints_visible: Optional[np.ndarray] = None) -> dict:
+    def encode(self, keypoints: np.ndarray, keypoints_visible: Optional[np.ndarray] = None) -> dict:
         """Encoding keypoints from input image space to normalized space.
 
         Args:
@@ -61,15 +59,12 @@ class RegressionLabel(BaseKeypointCodec):
             keypoints_visible = np.ones(keypoints.shape[:2], dtype=np.float32)
 
         w, h = self.input_size
-        valid = ((keypoints >= 0) &
-                 (keypoints <= [w - 1, h - 1])).all(axis=-1) & (
-                     keypoints_visible > 0.5)
+        valid = ((keypoints >= 0) & (keypoints <= [w - 1, h - 1])).all(axis=-1) & (keypoints_visible > 0.5)
 
         keypoint_labels = (keypoints / np.array([w, h])).astype(np.float32)
-        keypoint_weights = np.where(valid, 1., 0.).astype(np.float32)
+        keypoint_weights = np.where(valid, 1.0, 0.0).astype(np.float32)
 
-        encoded = dict(
-            keypoint_labels=keypoint_labels, keypoint_weights=keypoint_weights)
+        encoded = dict(keypoint_labels=keypoint_labels, keypoint_weights=keypoint_weights)
 
         return encoded
 
@@ -98,9 +93,7 @@ class RegressionLabel(BaseKeypointCodec):
 
             scores = (1 - output_sigma).mean(axis=-1)
         else:
-            raise ValueError(
-                'Keypoint dimension should be 2 or 4 (with sigma), '
-                f'but got {encoded.shape[-1]}')
+            raise ValueError("Keypoint dimension should be 2 or 4 (with sigma), " f"but got {encoded.shape[-1]}")
 
         w, h = self.input_size
         keypoints = normalized_coords * np.array([w, h])

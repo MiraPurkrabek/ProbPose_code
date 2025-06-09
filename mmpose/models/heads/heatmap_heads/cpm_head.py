@@ -10,8 +10,7 @@ from mmpose.evaluation.functional import pose_pck_accuracy
 from mmpose.models.utils.tta import flip_heatmaps
 from mmpose.registry import KEYPOINT_CODECS, MODELS
 from mmpose.utils.tensor_utils import to_numpy
-from mmpose.utils.typing import (Features, MultiConfig, OptConfigType,
-                                 OptSampleList, Predictions)
+from mmpose.utils.typing import Features, MultiConfig, OptConfigType, OptSampleList, Predictions
 from ..base_head import BaseHead
 
 OptIntSeq = Optional[Sequence[int]]
@@ -51,17 +50,18 @@ class CPMHead(BaseHead):
 
     _version = 2
 
-    def __init__(self,
-                 in_channels: Union[int, Sequence[int]],
-                 out_channels: int,
-                 num_stages: int,
-                 deconv_out_channels: OptIntSeq = None,
-                 deconv_kernel_sizes: OptIntSeq = None,
-                 final_layer: dict = dict(kernel_size=1),
-                 loss: MultiConfig = dict(
-                     type='KeypointMSELoss', use_target_weight=True),
-                 decoder: OptConfigType = None,
-                 init_cfg: OptConfigType = None):
+    def __init__(
+        self,
+        in_channels: Union[int, Sequence[int]],
+        out_channels: int,
+        num_stages: int,
+        deconv_out_channels: OptIntSeq = None,
+        deconv_kernel_sizes: OptIntSeq = None,
+        final_layer: dict = dict(kernel_size=1),
+        loss: MultiConfig = dict(type="KeypointMSELoss", use_target_weight=True),
+        decoder: OptConfigType = None,
+        init_cfg: OptConfigType = None,
+    ):
 
         if init_cfg is None:
             init_cfg = self.default_init_cfg
@@ -73,11 +73,8 @@ class CPMHead(BaseHead):
 
         if isinstance(loss, list):
             if len(loss) != num_stages:
-                raise ValueError(
-                    f'The length of loss_module({len(loss)}) did not match '
-                    f'`num_stages`({num_stages})')
-            self.loss_module = nn.ModuleList(
-                MODELS.build(_loss) for _loss in loss)
+                raise ValueError(f"The length of loss_module({len(loss)}) did not match " f"`num_stages`({num_stages})")
+            self.loss_module = nn.ModuleList(MODELS.build(_loss) for _loss in loss)
         else:
             self.loss_module = MODELS.build(loss)
 
@@ -89,13 +86,13 @@ class CPMHead(BaseHead):
         # build multi-stage deconv layers
         self.multi_deconv_layers = nn.ModuleList([])
         if deconv_out_channels:
-            if deconv_kernel_sizes is None or len(deconv_out_channels) != len(
-                    deconv_kernel_sizes):
+            if deconv_kernel_sizes is None or len(deconv_out_channels) != len(deconv_kernel_sizes):
                 raise ValueError(
                     '"deconv_out_channels" and "deconv_kernel_sizes" should '
-                    'be integer sequences with the same length. Got '
-                    f'mismatched lengths {deconv_out_channels} and '
-                    f'{deconv_kernel_sizes}')
+                    "be integer sequences with the same length. Got "
+                    f"mismatched lengths {deconv_out_channels} and "
+                    f"{deconv_kernel_sizes}"
+                )
 
             for _ in range(self.num_stages):
                 deconv_layers = self._make_deconv_layers(
@@ -112,11 +109,7 @@ class CPMHead(BaseHead):
         # build multi-stage final layers
         self.multi_final_layers = nn.ModuleList([])
         if final_layer is not None:
-            cfg = dict(
-                type='Conv2d',
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=1)
+            cfg = dict(type="Conv2d", in_channels=in_channels, out_channels=out_channels, kernel_size=1)
             cfg.update(final_layer)
             for _ in range(self.num_stages):
                 self.multi_final_layers.append(build_conv_layer(cfg))
@@ -127,20 +120,18 @@ class CPMHead(BaseHead):
     @property
     def default_init_cfg(self):
         init_cfg = [
-            dict(
-                type='Normal', layer=['Conv2d', 'ConvTranspose2d'], std=0.001),
-            dict(type='Constant', layer='BatchNorm2d', val=1)
+            dict(type="Normal", layer=["Conv2d", "ConvTranspose2d"], std=0.001),
+            dict(type="Constant", layer="BatchNorm2d", val=1),
         ]
         return init_cfg
 
-    def _make_deconv_layers(self, in_channels: int,
-                            layer_out_channels: Sequence[int],
-                            layer_kernel_sizes: Sequence[int]) -> nn.Module:
+    def _make_deconv_layers(
+        self, in_channels: int, layer_out_channels: Sequence[int], layer_kernel_sizes: Sequence[int]
+    ) -> nn.Module:
         """Create deconvolutional layers by given parameters."""
 
         layers = []
-        for out_channels, kernel_size in zip(layer_out_channels,
-                                             layer_kernel_sizes):
+        for out_channels, kernel_size in zip(layer_out_channels, layer_kernel_sizes):
             if kernel_size == 4:
                 padding = 1
                 output_padding = 0
@@ -151,18 +142,21 @@ class CPMHead(BaseHead):
                 padding = 0
                 output_padding = 0
             else:
-                raise ValueError(f'Unsupported kernel size {kernel_size} for'
-                                 'deconvlutional layers in '
-                                 f'{self.__class__.__name__}')
+                raise ValueError(
+                    f"Unsupported kernel size {kernel_size} for"
+                    "deconvlutional layers in "
+                    f"{self.__class__.__name__}"
+                )
             cfg = dict(
-                type='deconv',
+                type="deconv",
                 in_channels=in_channels,
                 out_channels=out_channels,
                 kernel_size=kernel_size,
                 stride=2,
                 padding=padding,
                 output_padding=output_padding,
-                bias=False)
+                bias=False,
+            )
             layers.append(build_upsample_layer(cfg))
             layers.append(nn.BatchNorm2d(num_features=out_channels))
             layers.append(nn.ReLU(inplace=True))
@@ -182,8 +176,8 @@ class CPMHead(BaseHead):
         """
         out = []
         assert len(feats) == self.num_stages, (
-            f'The length of feature maps did not match the '
-            f'`num_stages` in {self.__class__.__name__}')
+            f"The length of feature maps did not match the " f"`num_stages` in {self.__class__.__name__}"
+        )
         for i in range(self.num_stages):
             y = self.multi_deconv_layers[i](feats[i])
             y = self.multi_final_layers[i](y)
@@ -191,10 +185,7 @@ class CPMHead(BaseHead):
 
         return out
 
-    def predict(self,
-                feats: Features,
-                batch_data_samples: OptSampleList,
-                test_cfg: OptConfigType = {}) -> Predictions:
+    def predict(self, feats: Features, batch_data_samples: OptSampleList, test_cfg: OptConfigType = {}) -> Predictions:
         """Predict results from multi-stage feature maps.
 
         Args:
@@ -225,17 +216,18 @@ class CPMHead(BaseHead):
                 - heatmaps (Tensor): The predicted heatmaps in shape (K, h, w)
         """
 
-        if test_cfg.get('flip_test', False):
+        if test_cfg.get("flip_test", False):
             # TTA: flip test
             assert isinstance(feats, list) and len(feats) == 2
-            flip_indices = batch_data_samples[0].metainfo['flip_indices']
+            flip_indices = batch_data_samples[0].metainfo["flip_indices"]
             _feats, _feats_flip = feats
             _batch_heatmaps = self.forward(_feats)[-1]
             _batch_heatmaps_flip = flip_heatmaps(
                 self.forward(_feats_flip)[-1],
-                flip_mode=test_cfg.get('flip_mode', 'heatmap'),
+                flip_mode=test_cfg.get("flip_mode", "heatmap"),
                 flip_indices=flip_indices,
-                shift_heatmap=test_cfg.get('shift_heatmap', False))
+                shift_heatmap=test_cfg.get("shift_heatmap", False),
+            )
             batch_heatmaps = (_batch_heatmaps + _batch_heatmaps_flip) * 0.5
         else:
             multi_stage_heatmaps = self.forward(feats)
@@ -243,18 +235,13 @@ class CPMHead(BaseHead):
 
         preds = self.decode(batch_heatmaps)
 
-        if test_cfg.get('output_heatmaps', False):
-            pred_fields = [
-                PixelData(heatmaps=hm) for hm in batch_heatmaps.detach()
-            ]
+        if test_cfg.get("output_heatmaps", False):
+            pred_fields = [PixelData(heatmaps=hm) for hm in batch_heatmaps.detach()]
             return preds, pred_fields
         else:
             return preds
 
-    def loss(self,
-             feats: Sequence[Tensor],
-             batch_data_samples: OptSampleList,
-             train_cfg: OptConfigType = {}) -> dict:
+    def loss(self, feats: Sequence[Tensor], batch_data_samples: OptSampleList, train_cfg: OptConfigType = {}) -> dict:
         """Calculate losses from a batch of inputs and data samples.
 
         Args:
@@ -269,11 +256,8 @@ class CPMHead(BaseHead):
         """
         multi_stage_pred_heatmaps = self.forward(feats)
 
-        gt_heatmaps = torch.stack(
-            [d.gt_fields.heatmaps for d in batch_data_samples])
-        keypoint_weights = torch.cat([
-            d.gt_instance_labels.keypoint_weights for d in batch_data_samples
-        ])
+        gt_heatmaps = torch.stack([d.gt_fields.heatmaps for d in batch_data_samples])
+        keypoint_weights = torch.cat([d.gt_instance_labels.keypoint_weights for d in batch_data_samples])
 
         # calculate losses over multiple stages
         losses = dict()
@@ -287,19 +271,19 @@ class CPMHead(BaseHead):
 
             # the `gt_heatmaps` and `keypoint_weights` used to calculate loss
             # for different stages are the same
-            loss_i = loss_func(multi_stage_pred_heatmaps[i], gt_heatmaps,
-                               keypoint_weights)
+            loss_i = loss_func(multi_stage_pred_heatmaps[i], gt_heatmaps, keypoint_weights)
 
-            if 'loss_kpt' not in losses:
-                losses['loss_kpt'] = loss_i
+            if "loss_kpt" not in losses:
+                losses["loss_kpt"] = loss_i
             else:
-                losses['loss_kpt'] += loss_i
+                losses["loss_kpt"] += loss_i
 
         # calculate accuracy
         _, avg_acc, _ = pose_pck_accuracy(
             output=to_numpy(multi_stage_pred_heatmaps[-1]),
             target=to_numpy(gt_heatmaps),
-            mask=to_numpy(keypoint_weights) > 0)
+            mask=to_numpy(keypoint_weights) > 0,
+        )
 
         acc_pose = torch.tensor(avg_acc, device=gt_heatmaps.device)
         losses.update(acc_pose=acc_pose)

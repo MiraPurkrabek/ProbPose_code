@@ -30,15 +30,11 @@ class TestBadCaseHook(TestCase):
 
     def setUp(self) -> None:
         kpt_num = 16
-        PoseLocalVisualizer.get_instance('test_badcase_hook')
+        PoseLocalVisualizer.get_instance("test_badcase_hook")
 
         data_sample = PoseDataSample()
-        data_sample.set_metainfo({
-            'img_path':
-            osp.join(
-                osp.dirname(__file__), '../../data/coco/000000000785.jpg')
-        })
-        self.data_batch = {'data_samples': [data_sample] * 2}
+        data_sample.set_metainfo({"img_path": osp.join(osp.dirname(__file__), "../../data/coco/000000000785.jpg")})
+        self.data_batch = {"data_samples": [data_sample] * 2}
 
         pred_det_data_sample = data_sample.clone()
         pred_instances = InstanceData()
@@ -58,45 +54,45 @@ class TestBadCaseHook(TestCase):
         runner.iter = 1
 
         # test
-        timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-        out_dir = timestamp + '1'
+        timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        out_dir = timestamp + "1"
         runner.work_dir = timestamp
-        runner.timestamp = '1'
+        runner.timestamp = "1"
         hook = BadCaseAnalysisHook(enable=False, out_dir=out_dir)
         hook.after_test_iter(runner, 1, self.data_batch, self.outputs)
-        self.assertTrue(not osp.exists(f'{timestamp}/1/{out_dir}'))
+        self.assertTrue(not osp.exists(f"{timestamp}/1/{out_dir}"))
 
         hook = BadCaseAnalysisHook(
             enable=True,
             out_dir=out_dir,
-            metric_type='loss',
-            metric=ConfigDict(type='KeypointMSELoss'),
+            metric_type="loss",
+            metric=ConfigDict(type="KeypointMSELoss"),
             badcase_thr=-1,  # is_badcase = True
         )
         hook.after_test_iter(runner, 1, self.data_batch, self.outputs)
         self.assertEqual(hook._test_index, 2)
-        self.assertTrue(osp.exists(f'{timestamp}/1/{out_dir}'))
+        self.assertTrue(osp.exists(f"{timestamp}/1/{out_dir}"))
         # same image and preds/gts, so onlu one file
-        self.assertTrue(len(os.listdir(f'{timestamp}/1/{out_dir}')) == 1)
+        self.assertTrue(len(os.listdir(f"{timestamp}/1/{out_dir}")) == 1)
 
         hook.after_test_epoch(runner)
-        self.assertTrue(osp.exists(f'{timestamp}/1/{out_dir}/results.json'))
-        shutil.rmtree(f'{timestamp}')
+        self.assertTrue(osp.exists(f"{timestamp}/1/{out_dir}/results.json"))
+        shutil.rmtree(f"{timestamp}")
 
         hook = BadCaseAnalysisHook(
             enable=True,
             out_dir=out_dir,
-            metric_type='accuracy',
-            metric=ConfigDict(type='MpiiPCKAccuracy'),
+            metric_type="accuracy",
+            metric=ConfigDict(type="MpiiPCKAccuracy"),
             badcase_thr=-1,  # is_badcase = False
         )
         hook.after_test_iter(runner, 1, self.data_batch, self.outputs)
-        self.assertTrue(osp.exists(f'{timestamp}/1/{out_dir}'))
-        self.assertTrue(len(os.listdir(f'{timestamp}/1/{out_dir}')) == 0)
-        shutil.rmtree(f'{timestamp}')
+        self.assertTrue(osp.exists(f"{timestamp}/1/{out_dir}"))
+        self.assertTrue(len(os.listdir(f"{timestamp}/1/{out_dir}")) == 0)
+        shutil.rmtree(f"{timestamp}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test = TestBadCaseHook()
     test.setUp()
     test.test_after_test_iter()

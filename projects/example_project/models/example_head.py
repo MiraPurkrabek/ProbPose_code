@@ -11,7 +11,7 @@ class ExampleHead(HeatmapHead):
     """
 
     def __init__(self, **kwargs) -> None:
-        print('Initializing ExampleHead...')
+        print("Initializing ExampleHead...")
         super().__init__(**kwargs)
 
     def forward(self, feats):
