@@ -14,6 +14,8 @@ from mmpose.registry import VISUALIZERS
 from mmpose.structures import merge_data_samples
 from mmpose.utils import adapt_mmdet_pipeline
 import hashlib
+from twilio.rest import Client
+import os
 
 try:
     from mmdet.apis import inference_detector, init_detector
@@ -29,8 +31,17 @@ POSE_WEIGHTS = "models/ProbPose-s.pth"
 
 DEVICE = 'cuda:0'
 
+
+client = Client(
+  os.getenv("TWILIO_ACCOUNT_SID"),
+  os.getenv("TWILIO_AUTH_TOKEN")
+)
+token = client.tokens.create()  # includes token.iceServers
+rtc_configuration = {"iceServers": token.ice_servers}
+
+
 # WebRTC configuration for webcam streaming
-rtc_configuration = None
+# rtc_configuration = None
 webcam_constraints = {
     "video": {
         "width": {"exact": 320},
@@ -60,7 +71,8 @@ class AsyncFrameProcessor:
         self.startup_delay = startup_delay
         self.first_call_time = None
         self.frame_counter = 0
-        
+        self.runtime_start = time.time() + self.startup_delay
+
         # Thread-safe single-slot queues
         self.input_lock = threading.Lock()
         self.output_lock = threading.Lock()
@@ -110,13 +122,22 @@ class AsyncFrameProcessor:
                 processed_frame = self._process_frame(frame_to_process)
 
                 # Write frame number in the top left corner
+                current_runtime = time.time() - self.runtime_start
+                hh = int(current_runtime // 3600)
+                mm = int((current_runtime % 3600) // 60)
+                ss = int(current_runtime % 60)
+                if hh > 0:
+                    print_str = "{:02d}:{:02d}:{:02d}".format(hh, mm, ss)
+                else:
+                    print_str = "{:02d}:{:02d}".format(mm, ss)
+
                 processed_frame = cv2.putText(
                     processed_frame,
-                    "{:d}".format(frame_number),
-                    [50, 50],
+                    print_str,
+                    [10, 50],
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale=1,
-                    color=(0, 0, 255),
+                    fontScale=0.5,
+                    color=(255, 0, 0),
                     thickness=2,
                 )
                 
@@ -132,34 +153,36 @@ class AsyncFrameProcessor:
         frame = frame[:, ::-1, :]  # Flip horizontally for webcam mirroring
 
         det_result = inference_detector(self.det_model, frame)
-        pred_instance = det_result.pred_instances.cpu().numpy(  )
+        pred_instance = det_result.pred_instances.cpu().numpy()
         bboxes = np.concatenate(
             (pred_instance.bboxes, pred_instance.scores[:, None]), axis=1)
         bboxes = bboxes[np.logical_and(pred_instance.labels == 0,
                                     pred_instance.scores > bbox_thr)]
-        # Sort bboxes by confidence score (column 4) in descending order
-        order = np.argsort(bboxes[:, 4])[::-1]
-        bboxes = bboxes[order[0], :4].reshape((1, -1))
-
+        
         self.visualizer.set_image(frame)
+        if len(bboxes) > 0:
+            # Sort bboxes by confidence score (column 4) in descending order
+            order = np.argsort(bboxes[:, 4])[::-1]
+            bboxes = bboxes[order[0], :4].reshape((1, -1))
 
-        # predict keypoints
-        pose_start = time.time()
-        pose_results = inference_topdown(self.pose_model, frame, bboxes)
-        data_samples = merge_data_samples(pose_results)
 
-        # Visualize results
-        visualization_start = time.time()
-        self.visualizer.add_datasample(
-            'result',
-            frame,
-            data_sample=data_samples,
-            draw_gt=False,
-            draw_heatmap=False,
-            draw_bbox=True,
-            show_kpt_idx=False,
-            show=False,
-            kpt_thr=kpt_thr)
+            # predict keypoints
+            pose_start = time.time()
+            pose_results = inference_topdown(self.pose_model, frame, bboxes)
+            data_samples = merge_data_samples(pose_results)
+
+            # Visualize results
+            visualization_start = time.time()
+            self.visualizer.add_datasample(
+                'result',
+                frame,
+                data_sample=data_samples,
+                draw_gt=False,
+                draw_heatmap=False,
+                draw_bbox=True,
+                show_kpt_idx=False,
+                show=False,
+                kpt_thr=kpt_thr)
         
         stop_time = time.time()
         # print("Processing time: {:.3f}\tDetection time {:.3f}\tPose time: {:.3f}\tVisualization time: {:.3f}".format(
@@ -169,8 +192,6 @@ class AsyncFrameProcessor:
         #     stop_time - visualization_start,
         # ))
         return self.visualizer.get_image()
-
-
  
     def process(self, frame):
         """
@@ -258,14 +279,14 @@ with gr.Blocks(css=css) as demo:
     gr.HTML(
         """
     <h1 style='text-align: center'>
-    Async Frame Processing Demo (Powered by WebRTC ⚡️)
+    ProbPose Webcam Demo (CVPR 2025)
     </h1>
     """
     )
     gr.HTML(
         """
         <h3 style='text-align: center'>
-        Real-time frame processing with single-slot queues
+        See <a href="https://MiraPurkrabek.github.io/ProbPose/" target="_blank">https://MiraPurkrabek.github.io/ProbPose/</a> for details.
         </h3>
         """
     )
