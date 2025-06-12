@@ -193,7 +193,41 @@ class AsyncFrameProcessor:
         #     visualization_start - pose_start,
         #     stop_time - visualization_start,
         # ))
-        return self.visualizer.get_image()
+
+        visualized_image = self.visualizer.get_image()
+
+        # Make the image the same aspect ratio as the original frame. If different, pad with black accordingly.
+        original_height, original_width = frame.shape[:2]
+        visualized_height, visualized_width = visualized_image.shape[:2]
+        original_aspect = original_width / original_height
+        visualized_aspect = visualized_width / visualized_height
+        if original_aspect != visualized_aspect:
+            if original_aspect > visualized_aspect:
+                # Original is wider, pad width
+                target_w = original_aspect * visualized_height
+                pad_w = int((target_w - visualized_width) / 2)
+                pad_h = 0
+            else:
+                # Original is taller, pad height
+                target_h = visualized_width / original_aspect
+                pad_h = int((target_h - visualized_height) / 2)
+                pad_w = 0
+
+            visualized_image = cv2.copyMakeBorder(
+                visualized_image,
+                pad_h, pad_h, pad_w, pad_w,
+                borderType=cv2.BORDER_CONSTANT,
+                value=(80, 80, 80)  # Black padding
+            )
+
+        # Resize to original dimensions
+        visualized_image = cv2.resize(
+            visualized_image,
+            (original_width, original_height),
+            interpolation=cv2.INTER_LINEAR
+        )
+
+        return visualized_image
  
     def process(self, frame):
         """
