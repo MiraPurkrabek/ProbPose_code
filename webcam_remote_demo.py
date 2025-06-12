@@ -171,6 +171,8 @@ class AsyncFrameProcessor:
             pose_results = inference_topdown(self.pose_model, frame, bboxes)
             data_samples = merge_data_samples(pose_results)
 
+            # breakpoint()  
+
             # Visualize results
             visualization_start = time.time()
             self.visualizer.add_datasample(

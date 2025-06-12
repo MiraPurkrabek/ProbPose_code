@@ -15,7 +15,21 @@ from mmpose.registry import VISUALIZERS
 from mmpose.structures import PoseDataSample
 from .opencv_backend_visualizer import OpencvBackendVisualizer
 from .simcc_vis import SimCCVisualizer
+
+import matplotlib.pyplot as plt
+
 from mmpose.structures.keypoint import fix_bbox_aspect_ratio
+
+import cv2
+
+import os
+
+try:
+    POSEVIS=True
+    from posevis import pose_visualization
+except ImportError:
+    POSEVIS=False
+
 
 def _get_adaptive_scales(areas: np.ndarray,
                          min_area: int = 800,
@@ -540,16 +554,22 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
         
         
         if draw_type == "featmap":
-            # The original jet-colored featuremap
-
             if heatmaps.dim() == 3:
                 heatmaps, _ = heatmaps.max(dim=0)
             heatmaps = heatmaps.unsqueeze(0)
+
+            # Pad the image such that the heatmap is visible
+            # breakpoint()
+
             out_image = self.draw_featmap(heatmaps, overlaid_image)
         
         elif draw_type == "p_area":
-            # Probability area for a given threshold
 
+            num_colors = heatmaps.shape[0]
+            
+            # Define unique colormap colors for each heatmap (HSV space to RGB)
+            # colors_hsv = [(i * 180 // 17, 255, 255) for i in range(num_colors)]  # Unique hues
+            # colors_rgb = [cv2.cvtColor(np.uint8([[[h, s, v]]]), cv2.COLOR_HSV2BGR).squeeze() for h, s, v in colors_hsv]
             colors_rgb = np.array([
                 [230, 25, 75],   # red
                 [60, 180, 75],   # green
@@ -575,6 +595,8 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                 [128, 128, 128], # grey
                 [0, 0, 0],       # black
             ])
+            colors_brg = colors_rgb[:, ::-1]  # Convert RGB to BGR
+
 
             # Create an empty image (float for accumulation)
             acc_heatmaps = np.zeros((heatmaps.shape[1], heatmaps.shape[2], 3), dtype=np.float32)
@@ -582,11 +604,15 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
             painted_img = overlaid_image.copy()
             
             # Process each heatmap
+            ki = 0
             for heatmap, color in zip(heatmaps, colors_rgb):
                 heatmap = heatmap.numpy().squeeze().astype(np.float32)
                 prob_thr = 0.75
 
                 if heatmap.sum() < prob_thr:
+                    continue
+
+                if heatmap.max() < 0.3:
                     continue
 
                 htm_flat = heatmap.flatten()
@@ -599,22 +625,29 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                 binary_map = np.where(heatmap > k_thr, 1, 0)
                 binary_map = binary_map.astype(np.uint8)
 
+                # Step 1: Find all external contours
                 contours, _ = cv2.findContours(binary_map, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+                # Draw contours on the image
                 probmap_i = cv2.drawContours(overlaid_image.copy(), contours, -1, color.tolist(), thickness=-1, lineType=cv2.LINE_4)
                 probmap_i_transparent = cv2.addWeighted(probmap_i, 0.7, painted_img, 0.3, 0)
                 painted_img = np.where(binary_map[..., None], probmap_i_transparent, painted_img)
 
                 painted_img = cv2.drawContours(painted_img, contours, -1, color.tolist(), thickness=1, lineType=cv2.LINE_4)
+                
+                ki += 1
 
             out_image = painted_img
 
         elif draw_type == "contours":
-            # Probability contours -- each color is 10% area
-
             overlaid_image = cv2.cvtColor(overlaid_image, cv2.COLOR_BGR2GRAY)
             overlaid_image = cv2.cvtColor(overlaid_image, cv2.COLOR_GRAY2BGR)
 
+            num_colors = heatmaps.shape[0]
+            
+            # Define unique colormap colors for each heatmap (HSV space to RGB)
+            # colors_hsv = [(i * 180 // 17, 255, 255) for i in range(num_colors)]  # Unique hues
+            # colors_rgb = [cv2.cvtColor(np.uint8([[[h, s, v]]]), cv2.COLOR_HSV2BGR).squeeze() for h, s, v in colors_hsv]
             colors_rgb = np.array([
                 [230, 25, 75],   # red
                 [60, 180, 75],   # green
@@ -640,12 +673,21 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                 [128, 128, 128], # grey
                 [0, 0, 0],       # black
             ])
+            colors_brg = colors_rgb[:, ::-1]  # Convert RGB to BGR
+
 
             # Create an empty image (float for accumulation)
-            
+            acc_heatmaps = np.zeros((heatmaps.shape[1], heatmaps.shape[2], 3), dtype=np.float32)
+
             painted_img = overlaid_image.copy()
             
+            cmap = plt.get_cmap('tab10', 10)
+
+            # # Shuffle heatmaps
+            # heatmaps = heatmaps[torch.randperm(heatmaps.size(0))]
+
             # Process each heatmap
+            ki = 0
             for heatmap, color in zip(heatmaps, colors_rgb):
                 heatmap = heatmap.numpy().squeeze().astype(np.float32)
                 
@@ -654,7 +696,10 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                 htm_cusum = np.cumsum(htm_sort)
                 
                 for prob_i, prob_thr in enumerate(np.linspace(0.9, 0.1, 9, endpoint=True)):
-                                    
+                
+                    # color = cmap(10-prob_i)
+                    # color = np.array(color[:3]) * 255
+                    
                     color = colors_rgb[prob_i]
 
                     if heatmap.sum() < 0.5:
@@ -663,6 +708,11 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                     if heatmap.sum() < prob_thr:
                         continue
 
+                    # if heatmap.max() < 0.3:
+                    #     continue
+
+                    # k_thr_up   = htm_sort[min(np.searchsorted(htm_cusum, (prob_thr - 0.1) * htm_cusum[-1], side='right'), len(htm_sort)-1)]
+                    # k_thr_down = htm_sort[min(np.searchsorted(htm_cusum, prob_thr * htm_cusum[-1], side='right'), len(htm_sort)-1)]
                     k_thr_up   = htm_sort[min(np.searchsorted(htm_cusum, (prob_thr - 0.1), side='right'), len(htm_sort)-1)]
                     k_thr_down = htm_sort[min(np.searchsorted(htm_cusum, prob_thr, side='right'), len(htm_sort)-1)]
 
@@ -677,7 +727,13 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                     probmap_i = cv2.drawContours(overlaid_image.copy(), contours, -1, color.tolist(), thickness=-1, lineType=cv2.LINE_4)
                     probmap_i_transparent = cv2.addWeighted(probmap_i, 0.6, painted_img, 0.4, 0)
                     painted_img = np.where(binary_map[..., None], probmap_i_transparent, painted_img)
+
+                    # painted_img = cv2.drawContours(painted_img, contours, -1, color.tolist(), thickness=1, lineType=cv2.LINE_4)
                 
+                # break
+
+                ki += 1
+
             out_image = painted_img
 
         return out_image
@@ -717,7 +773,7 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                        data_sample: PoseDataSample,
                        draw_gt: bool = True,
                        draw_pred: bool = True,
-                       draw_heatmap: bool = False,
+                       draw_heatmap: bool = True,
                        draw_bbox: bool = False,
                        show_kpt_idx: bool = False,
                        skeleton_style: str = 'mmpose',
@@ -765,18 +821,38 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
 
         gt_img_data = None
         pred_img_data = None
+        padding = [0, 0, 0, 0]
 
         dt_kpts = data_sample.pred_instances.keypoints.reshape((-1, 2))
-        dt_vis = data_sample.pred_instances.keypoint_scores.reshape(-1)[:17]
-        try:
+
+        if hasattr(data_sample.gt_instances, 'keypoints'):
             gt_kpts = data_sample.gt_instances.keypoints.reshape((-1, 2))
             gt_vis = data_sample.gt_instances.keypoints_visible.reshape(-1)[:17] * 2
-        except AttributeError:
-            gt_kpts = np.zeros_like(dt_kpts)
-            gt_vis = np.zeros_like(dt_vis)
+        else:
+            gt_kpts = dt_kpts.copy()
+            gt_vis = np.zeros(17)
 
         gt_kpts = gt_kpts[:17, :]
         dt_kpts = dt_kpts[:17, :]
+        bbox = data_sample.gt_instances.bboxes.squeeze()
+        bbox_xywh = np.array([
+            bbox[0],
+            bbox[1],
+            bbox[2] - bbox[0],
+            bbox[3] - bbox[1],
+        ])
+        dt_vis = data_sample.pred_instances.keypoint_scores.reshape(-1)[:17]
+
+        dt_dict = {
+            "keypoints": np.concatenate([dt_kpts, dt_vis[:, None]], axis=1),
+        }
+        gt_dict = {
+            "keypoints": np.concatenate([gt_kpts, gt_vis[:, None]], axis=1),
+            "bbox": bbox_xywh,
+            "area": bbox_xywh[2] * bbox_xywh[3],
+        }
+
+        oks = compute_oks(gt_dict, dt_dict)
 
         if draw_gt:
             gt_img_data = image.copy()
@@ -784,13 +860,32 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
 
             # draw bboxes & keypoints
             if 'gt_instances' in data_sample:
-                gt_img_data = self._draw_instances_kpts(
-                    gt_img_data, data_sample.gt_instances, kpt_thr,
-                    show_kpt_idx, skeleton_style)
-                if draw_bbox:
-                    gt_img_data = self._draw_instances_bbox(
-                        gt_img_data, data_sample.gt_instances)
+                # gt_img_data = self._draw_instances_kpts(
+                #     gt_img_data, data_sample.gt_instances, kpt_thr,
+                #     show_kpt_idx, skeleton_style)
+                # if draw_bbox:
+                #     gt_img_data = self._draw_instances_bbox(
+                #         gt_img_data, data_sample.gt_instances)
                 
+                # print(gt_dict)
+                # print(gt_img_data is None)
+                gt_img_data, padding = pose_visualization(
+                    gt_img_data,
+                    gt_dict,
+                    format="COCO",
+                    greyness=1.0,
+                    show_markers=True,
+                    show_bones=True,
+                    line_type="dashed",
+                    width_multiplier=5.0,
+                    bbox_width_multiplier=2.0,
+                    show_bbox=draw_bbox,
+                    differ_individuals=False,
+                    return_padding=True,
+                )
+                
+                
+
             # draw heatmaps
             if 'gt_fields' in data_sample and draw_heatmap:
                 gt_img_heatmap = self._draw_instance_heatmap(
@@ -812,12 +907,53 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
 
             # draw bboxes & keypoints
             if 'pred_instances' in data_sample:
-                pred_img_data = self._draw_instances_kpts(
-                    pred_img_data, data_sample.pred_instances, kpt_thr,
-                    show_kpt_idx, skeleton_style)
-                if draw_bbox:
-                    pred_img_data = self._draw_instances_bbox(
-                        pred_img_data, data_sample.pred_instances)
+                if POSEVIS:
+                    pred_samples = []
+                    for i in range(data_sample.pred_instances.keypoints.shape[0]):
+                        kpts = data_sample.pred_instances.keypoints[i].reshape(-1, 2)
+                        try:
+                            vis = data_sample.pred_instances.keypoints_probs[i][:, None].copy()
+                            vis[vis < 0.5] = 0
+                            vis[vis >= 0.5] = 2
+                        except AttributeError:
+                            vis = data_sample.pred_instances.keypoint_scores[i][:, None]
+                        kpts = np.concatenate([kpts, vis], axis=1)
+                        kpts[kpts[:, -1] < 1e-6, :] = 0
+                        bbox_xyxy = data_sample.pred_instances.bboxes[i].squeeze()
+                        bbox_xywh = np.array([
+                            bbox_xyxy[0],
+                            bbox_xyxy[1],
+                            bbox_xyxy[2] - bbox_xyxy[0],
+                            bbox_xyxy[3] - bbox_xyxy[1],
+                        ])
+                        pred_samples.append({
+                            'keypoints': kpts[:17, :],
+                            'bbox': bbox_xywh,
+                        })
+
+
+                    pred_img_data, padding = pose_visualization(
+                        pred_img_data,
+                        pred_samples,
+                        format="COCO",
+                        greyness=1.0,
+                        show_markers=True,
+                        show_bones=True,
+                        line_type="solid",
+                        width_multiplier=8.0,
+                        bbox_width_multiplier=3.0,
+                        show_bbox=draw_bbox,
+                        differ_individuals=False,
+                        return_padding=True,
+                    )
+
+                else:
+                    pred_img_data = self._draw_instances_kpts(
+                        pred_img_data, data_sample.pred_instances, kpt_thr,
+                        show_kpt_idx, skeleton_style)
+                    if draw_bbox:
+                        pred_img_data = self._draw_instances_bbox(
+                            pred_img_data, data_sample.pred_instances)
 
             # draw heatmaps
             if 'pred_fields' in data_sample and draw_heatmap:
@@ -826,51 +962,53 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
                         data_sample.pred_fields, image)
                 else:
 
-                    max_image_pad = [0, 0, 0, 0]
-                    for input_center, aw_scale in zip(data_sample.input_center, data_sample.input_scale):
-                        img_pad = [
-                            int(max(aw_scale[0] / 2 - input_center[0] + 10, 0)),
-                            int(max(aw_scale[1] / 2 - input_center[1] + 10, 0)),
-                            int(max(input_center[0] + aw_scale[0] / 2 - data_sample.ori_shape[1] + 10, 0)),
-                            int(max(input_center[1] + aw_scale[1] / 2 - data_sample.ori_shape[0] + 10, 0))
-                        ]
-                        max_image_pad = np.maximum(max_image_pad, img_pad)
+                    aw_scale = np.array([data_sample.input_scale[0], data_sample.input_scale[1]])
+                    if aw_scale[0]/aw_scale[1] > 192/256:
+                        aw_scale[1] = aw_scale[0] * 192/256
+                    elif aw_scale[0]/aw_scale[1] < 192/256:
+                        aw_scale[0] = aw_scale[1] * 256/192
+                    aw_scale = aw_scale * 1.25
+                    aw_scale = data_sample.input_scale
+                    img_pad = [
+                        int(max(aw_scale[0] / 2 - data_sample.input_center[0] + 10, 0)),
+                        int(max(aw_scale[1] / 2 - data_sample.input_center[1] + 10, 0)),
+                        int(max(data_sample.input_center[0] + aw_scale[0] / 2 - data_sample.ori_shape[1] + 10, 0)),
+                        int(max(data_sample.input_center[1] + aw_scale[1] / 2 - data_sample.ori_shape[0] + 10, 0))
+                    ]
 
                     padded_img = cv2.copyMakeBorder(
                         image.copy(),
-                        max_image_pad[1],
-                        max_image_pad[3],
-                        max_image_pad[0],
-                        max_image_pad[2],
+                        img_pad[1],
+                        img_pad[3],
+                        img_pad[0],
+                        img_pad[2],
                         cv2.BORDER_CONSTANT,
                         value=(80, 80, 80),
                     ) 
-                    
+                    # cv2.copyMakeBorder(image.copy(),img_pad[0],img_pad[1],img_pad[2],img_pad[3],cv2.BORDER_CONSTANT)
+
+                    # print(image.shape, padded_img.shape, data_sample.pred_fields.shape)
+
                     # Normalize heatmaps and compute its posterior
-                    # ProbMaps are not normalized due to the resize to original image size
-                    # Heatmaps are never normalized by design
                     heatmaps = data_sample.pred_fields.heatmaps
                     heatmaps = heatmaps / heatmaps.sum(axis=(1,2), keepdims=True)
-                    presence_prob = data_sample.pred_instances.keypoints_probs.reshape(-1, 17)
-
-                    # Take mean across all instances. Even though the operation does not make sense mathematically, it is only for visualization
-                    # To make the probmaps mathematically corect, the multiplication should be made in mmpose/structures/utils.py - merge_data_samples()
-                    # But that would not be backward compatible with previous methods
-                    presence_prob = presence_prob.mean(axis=0)
+                    presence_prob = data_sample.pred_instances.keypoints_probs.reshape(17)
                     posterior = heatmaps * presence_prob[:, None, None]
                     data_sample.pred_fields.heatmaps = posterior
-                    
+
+                    # if "581784" in data_sample.img_path:
+                    # breakpoint()
+
                     pred_img_heatmap = self._draw_instance_heatmap(
-                        data_sample.pred_fields, padded_img, draw_type="p_area")
+                        data_sample.pred_fields, padded_img, draw_type="contours")
                     
-                    # Draw abox over heatmap
-                    if draw_bbox:
-                        for bbox_xyxy in data_sample.gt_instances.bboxes:   
-                            bbox_xyxy[:2] += np.array(max_image_pad[:2])
-                            bbox_xyxy[2:] += np.array(max_image_pad[:2])
-                            abox_xyxy = fix_bbox_aspect_ratio(bbox_xyxy, aspect_ratio=3/4, padding=1.25, bbox_format='xyxy')
-                            abox_xyxy = abox_xyxy.flatten().astype(int)
-                            pred_img_heatmap = cv2.rectangle(pred_img_heatmap, (abox_xyxy[0], abox_xyxy[1]), (abox_xyxy[2], abox_xyxy[3]), (0, 255, 0), 1)
+                     # Draw abox over heatmap
+                    bbox_xyxy = data_sample.gt_instances.bboxes.squeeze()
+                    bbox_xyxy[:2] += np.array(img_pad[:2])
+                    bbox_xyxy[2:] += np.array(img_pad[:2])
+                    abox_xyxy = fix_bbox_aspect_ratio(bbox_xyxy, aspect_ratio=3/4, padding=1.25, bbox_format='xyxy')
+                    abox_xyxy = abox_xyxy.flatten().astype(int)
+                    pred_img_heatmap = cv2.rectangle(pred_img_heatmap, (abox_xyxy[0], abox_xyxy[1]), (abox_xyxy[2], abox_xyxy[3]), (0, 255, 0), 1)
 
                 if pred_img_heatmap is not None:
                     pred_img_heatmap = cv2.resize(pred_img_heatmap, (pred_img_data.shape[:2][::-1]))
@@ -907,9 +1045,62 @@ class PoseLocalVisualizer(OpencvBackendVisualizer):
             self.show(drawn_img, win_name=name, wait_time=wait_time)
 
         if out_file is not None:
+
+            out_dirname = os.path.dirname(out_file)
+            out_basename = os.path.basename(out_file)
+            out_basename = "{:03d}_{:s}".format(int(oks*100), out_basename)
+            out_file = os.path.join(out_dirname, out_basename)
+            # out_file = out_file.replace(".jpg", ".png")
+
             mmcv.imwrite(drawn_img[..., ::-1], out_file)
         else:
             # save drawn_img to backends
             self.add_image(name, drawn_img, step)
 
         return self.get_image()
+
+
+def compute_oks(gt, dt, use_area=True, per_kpt=False):
+    sigmas = np.array(
+                [.26, .25, .25, .35, .35, .79, .79, .72, .72, .62, .62, 1.07, 1.07, .87, .87, .89, .89])/10.0
+    vars = (sigmas * 2)**2
+    k = len(sigmas)
+    visibility_condition = lambda x: x > 0
+    g = np.array(gt['keypoints']).reshape(k, 3)
+    xg = g[:, 0]; yg = g[:, 1]; vg = g[:, 2]
+    k1 = np.count_nonzero(visibility_condition(vg))
+    bb = gt['bbox']
+    x0 = bb[0] - bb[2]; x1 = bb[0] + bb[2] * 2
+    y0 = bb[1] - bb[3]; y1 = bb[1] + bb[3] * 2
+    
+    d = np.array(dt['keypoints']).reshape((k, 3))
+    xd = d[:, 0]; yd = d[:, 1]
+            
+    if k1>0:
+        # measure the per-keypoint distance if keypoints visible
+        dx = xd - xg
+        dy = yd - yg
+
+    else:
+        # measure minimum distance to keypoints in (x0,y0) & (x1,y1)
+        z = np.zeros((k))
+        dx = np.max((z, x0-xd),axis=0)+np.max((z, xd-x1),axis=0)
+        dy = np.max((z, y0-yd),axis=0)+np.max((z, yd-y1),axis=0)
+
+    if use_area:
+        e = (dx**2 + dy**2) / vars / (gt['area']+np.spacing(1)) / 2
+    else:
+        tmparea = gt['bbox'][3] * gt['bbox'][2] * 0.53
+        e = (dx**2 + dy**2) / vars / (tmparea+np.spacing(1)) / 2
+        
+    if per_kpt:
+        oks = np.exp(-e)
+        if k1 > 0:
+            oks[~visibility_condition(vg)] = 0
+
+    else:
+        if k1 > 0:
+            e=e[visibility_condition(vg)]
+        oks = np.sum(np.exp(-e)) / e.shape[0]
+
+    return oks
