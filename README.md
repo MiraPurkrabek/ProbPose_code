@@ -1,5 +1,13 @@
 # ProbPose: A Probabilistic Approach to 2D Human Pose Estimation
 
+> **⚠️ 🔴 IMPORTANT DISCLAIMER 🔴 ⚠️**
+> 
+> **<span style="color: red;">This is a demo branch used for CVPR webcam demonstrations and HuggingFace integration. This branch is NOT standalone and has missing dependencies.</span>**
+> 
+> **<span style="color: red;">The visualization code expects our 'posevis' pose visualization package which is not yet integrated into this repository.</span>**
+> 
+> **<span style="color: red;">For a complete, standalone implementation, use the 'main' branch.</span>**
+
 <div align="center">
 
 ![ProbPose Logo](demo/resources/ProbPose.ico)
