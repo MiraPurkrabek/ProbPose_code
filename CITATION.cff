@@ -17,10 +17,9 @@ preferred-citation:
     given-names: Miroslav
   - family-names: Matas
     given-names: Jiri
-  journal: "Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR)"
+  collection-title: "Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR)"
   month: 6
   start: 27124 # First page number
   end: 27133 # Last page number
   title: "ProbPose: A Probabilistic Approach to 2D Human Pose Estimation"
   year: 2025
-
