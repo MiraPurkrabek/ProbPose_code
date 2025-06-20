@@ -19,7 +19,8 @@
 
 
 <div align="center">
-![ProbPose Logo](demo/resources/McLaughlin.gif)
+<img src="demo/resources/McLaughlin.gif" alt="ProbPose Showcase">
+
 
 [![Paper](https://img.shields.io/badge/Paper-CVPR%202025-blue)](https://arxiv.org/abs/2412.02254) &nbsp;&nbsp;&nbsp;
 [![Website](https://img.shields.io/badge/Website-ProbPose-green)](https://mirapurkrabek.github.io/ProbPose/) &nbsp;&nbsp;&nbsp;
