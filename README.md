@@ -1,4 +1,6 @@
-# ProbPose: A Probabilistic Approach to 2D Human Pose Estimation (CVPR 2025)
+# ProbPose: A Probabilistic Approach to 2D Human Pose Estimation
+## CVPR 2025
+
 
 <div align="center">
 
