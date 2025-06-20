@@ -1,16 +1,16 @@
 </h1><div id="toc">
-  <ul align="center" style="list-style: none">
+  <ul align="center" style="list-style: none; padding: 0; margin: 0;">
     <summary>
-      <h1>
+      <h1 style="margin-bottom: 0.0em;">
         ProbPose: A Probabilistic Approach to 2D Human Pose Estimation
       </h1>
     </summary>
   </ul>
 </div>
 </h1><div id="toc">
-  <ul align="center" style="list-style: none">
+  <ul align="center" style="list-style: none; padding: 0; margin: 0;">
     <summary>
-      <h2>
+      <h2 style="margin-bottom: 0.2em;">
         CVPR 2025
       </h2>
     </summary>
