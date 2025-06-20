@@ -1,8 +1,26 @@
-cff-version: 1.0.0
+# CITATION.cff file for ProbPose: A Probabilistic Approach to 2D Human Pose Estimation
+# This file provides metadata for the software and its preferred citation format.
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-  - name: "Purkrabek, Miroslav and Matas, Jiri"
+- family-names: Purkrabek
+  given-names: Miroslav
+- family-names: Matas
+  given-names: Jiri
 title: "ProbPose: A Probabilistic Approach to 2D Human Pose Estimation"
-date-released: 2025-04-09
-url: "https://arxiv.org/abs/2412.02254"
-license: GPL-3.0
+version: 1.0.0
+date-released: 2025-06-20
+preferred-citation:
+  type: conference-paper
+  authors:
+  - family-names: Purkrabek
+    given-names: Miroslav
+  - family-names: Matas
+    given-names: Jiri
+  journal: "Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR)"
+  month: 6
+  start: 27124 # First page number
+  end: 27133 # Last page number
+  title: "ProbPose: A Probabilistic Approach to 2D Human Pose Estimation"
+  year: 2025
+
