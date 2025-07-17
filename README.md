@@ -43,6 +43,8 @@ For more details, please visit our [project website](https://mirapurkrabek.githu
 
 ## 📢 News
 
+- **July 2025**: [exococotools PyPI package](https://github.com/MiraPurkrabek/exococotools) available
+- **June 2025**: Live webcam demo branch available 
 - **April 2025**: Code is released
 - **March 2025**: Paper accepted to CVPR 2025! 🎉
 
@@ -128,10 +130,10 @@ We plan to release Ex-mAP evaluation tool as a standalone package similar to xtc
 ## 🗺️ Roadmap
 
 - [ ] Add config and weights for DoubleProbmap model
-- [ ] Add out-of-image pose visualization
-- [ ] Add new package with Ex-OKS implementation
+- [x] Add out-of-image pose visualization
+- [x] Add new package with Ex-OKS implementation --> [exococotools](https://github.com/MiraPurkrabek/exococotools)
 - [ ] Add ProbPose to MMPose library
-- [ ] Create HuggingFace demo
+- [x] Create HuggingFace demo
 
 ## 🙏 Acknowledgments
 
