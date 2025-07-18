@@ -126,6 +126,15 @@ The [CropCOCO dataset](https://huggingface.co/datasets/vrg-prague/CropCOCO) is a
 For Ex-OKS and Ex-mAP evaluation, you can use [cocoeval.py](mmpose/evaluation/metrics/_cocoeval.py) file which is a direct replacement for the original cocoeval.py file from xtcocotools.
 We plan to release Ex-mAP evaluation tool as a standalone package similar to xtcocotools.
 
+## 📏 Ex-OKS Evaluation
+
+Our Ex-OKS metric can be computed via the standalone exococotools package, which is fully backward-compatible with xtcocotools/pycocotools. Install and run it as a drop-in replacement:
+
+```bash
+pip install exococotools
+```
+
+For more details and advanced options, see the package website: https://github.com/MiraPurkrabek/exococotools
 
 ## 🗺️ Roadmap
 
