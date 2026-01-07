@@ -114,6 +114,16 @@ Expected result (click for full size):
 
 For more detailed information on demos and visualization options, please refer to the [MMPose documentation](https://mmpose.readthedocs.io/en/latest/user_guides/inference.html).
 
+### Google Colab Demo
+
+You can also run ProbPose directly in Google Colab without any local installation!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1QKyFBlKqnVd0Q_TC19AKLFr2zrT-gqdZ?usp=sharing)
+
+**Note:** The installation process in Colab takes approximately 5-10 minutes. Please be patient during setup - it is not stuck!
+
+For more detailed information on demos and visualization options, please refer to the [MMPose documentation](https://mmpose.readthedocs.io/en/latest/user_guides/inference.html).
+
 ## 📦 Pre-trained Models
 
 Pre-trained models are available on [VRG Hugging Face 🤗](https://huggingface.co/vrg-prague/ProbPose-s/):
