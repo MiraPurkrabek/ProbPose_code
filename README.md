@@ -28,6 +28,9 @@
 
 </div>
 
+> [!IMPORTANT]
+> ProbPose is now continued in the [BBoxMaskPose repository](https://github.com/MiraPurkrabek/BBoxMaskPose). The new PMPose-S, -M, -L, and -H models outperform ProbPose while retaining probabilistic modeling. See the repository for the latest developments.
+
 ## 📋 Overview
 
 ProbPose introduces a probabilistic framework for human pose estimation, focusing on reducing false positives by predicting keypoint presence probabilities and handling out-of-image keypoints. It also introduces the new Ex-OKS metric to evaluate models on false positive predictions.
@@ -43,6 +46,7 @@ For more details, please visit our [project website](https://mirapurkrabek.githu
 
 ## 📢 News
 
+- **March 2026**: We released a new code for [BBoxMaskPose v2](https://github.com/MiraPurkrabek/BBoxMaskPose) which builds on ProbPose. See the repo for lattest models.
 - **July 2025**: [exococotools PyPI package](https://github.com/MiraPurkrabek/exococotools) available
 - **June 2025**: Live webcam demo branch available 
 - **April 2025**: Code is released
